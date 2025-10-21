@@ -5,12 +5,12 @@ import pandas as pd
 def get_snowflake_connection():
     return snowflake.connector.connect(
         user=st.secrets["snowflake"]["user"],
+        password=st.secrets["snowflake"]["password"],
         account=st.secrets["snowflake"]["account"],
         warehouse=st.secrets["snowflake"]["warehouse"],
         database=st.secrets["snowflake"]["database"],
         schema=st.secrets["snowflake"]["schema"],
-        role=st.secrets["snowflake"]["role"],
-        authenticator="externalbrowser"
+        role=st.secrets["snowflake"]["role"]
     )
 
 def get_product_activity_by_gamechanger_id(account18_id: str) -> pd.DataFrame:
