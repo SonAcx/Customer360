@@ -1,16 +1,35 @@
 import snowflake.connector
 import streamlit as st
 import pandas as pd
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
 
 def get_snowflake_connection():
+    # Load the private key properly
+    private_key_str = st.secrets["snowflake"]["private_key"]
+    
+    # Convert the private key string to bytes
+    p_key = serialization.load_pem_private_key(
+        private_key_str.encode(),
+        password=None,
+        backend=default_backend()
+    )
+    
+    # Serialize to DER format (what Snowflake expects)
+    pkb = p_key.private_bytes(
+        encoding=serialization.Encoding.DER,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption()
+    )
+    
     return snowflake.connector.connect(
         user=st.secrets["snowflake"]["user"],
-        password=st.secrets["snowflake"]["password"],
         account=st.secrets["snowflake"]["account"],
         warehouse=st.secrets["snowflake"]["warehouse"],
         database=st.secrets["snowflake"]["database"],
         schema=st.secrets["snowflake"]["schema"],
-        role=st.secrets["snowflake"]["role"]
+        role=st.secrets["snowflake"]["role"],
+        private_key=pkb
     )
 
 def get_product_activity_by_gamechanger_id(account18_id: str) -> pd.DataFrame:
