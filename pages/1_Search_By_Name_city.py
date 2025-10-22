@@ -176,6 +176,10 @@ if st.session_state.page == 'activity':
                 # Replace None/NaN with empty strings
                 sf_activity_df = sf_activity_df.fillna('')
                 
+                # DEBUG: Show what columns we actually have
+                st.write("🔍 DEBUG - Available columns:", sf_activity_df.columns.tolist())
+                st.write("🔍 DEBUG - Number of rows:", len(sf_activity_df))
+                
                 # Display the dataframe with all columns
                 st.dataframe(sf_activity_df, use_container_width=True, height=400, hide_index=True)
         else:
