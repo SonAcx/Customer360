@@ -199,6 +199,10 @@ if st.session_state.page == 'activity':
                 importlib.reload(snowflake_connector)
                 sf_activity_df = snowflake_connector.get_product_activity_by_gamechanger_id(gamechanger_id)
             
+            # Debug: Show what we got
+            st.write(f"🔍 DEBUG: DataFrame shape: {sf_activity_df.shape}")
+            st.write(f"🔍 DEBUG: Is empty? {sf_activity_df.empty}")
+            
             if sf_activity_df.empty:
                 st.info("No Salesforce product activity found for this account.")
             else:
