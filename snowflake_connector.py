@@ -43,9 +43,9 @@ def get_product_activity_by_gamechanger_id(account18_id: str) -> pd.DataFrame:
             p.TF_PRODUCT_SKU__C AS PRODUCT_SKU,
             p.TF_PRODUCTCLIENTNAME__C AS CLIENT_NAME,
             p.TF_PRODUCTCATEGORY__C AS PRODUCT_CATEGORY,
-            p.PIPELINE_ACTIVITY__C,
-            p.PRODUCTSTATUS__C,
-            p.QUANTITY_ENTERED__C
+            p.PIPELINE_ACTIVITY__C AS PIPELINE_ACTIVITY,
+            p.PRODUCTSTATUS__C AS PRODUCT_STATUS,
+            p.QUANTITY_ENTERED__C AS QUANTITY SOLD,
         FROM PROD_DWH.DWH.DIM_ACCOUNT a
         JOIN PROD_DWH.DWH.DIM_PRODUCTACTIVITY p
             ON a.ACCOUNT_UUID = p.ACCOUNT_OPPERATOR_UUID
