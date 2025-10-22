@@ -244,7 +244,9 @@ if st.session_state.page == 'activity':
                 from snowflake_connector import get_amp_activity_by_customer_id
                 # Convert to proper format for the function
                 if isinstance(amp_customer_id, str):
-                    amp_id_value = int(float(amp_customer_id)) if amp_customer_id else None
+                    # Remove green circle emoji if present
+                    clean_amp_id = amp_customer_id.replace(' 🟢', '').strip()
+                    amp_id_value = int(float(clean_amp_id)) if clean_amp_id else None
                 else:
                     amp_id_value = int(float(amp_customer_id)) if amp_customer_id != 0 else None
                 
