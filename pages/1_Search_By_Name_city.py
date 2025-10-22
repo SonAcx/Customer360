@@ -4,7 +4,7 @@ import sys, os
 
 # --- IMPORTS ---
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from snowflake_connector import get_snowflake_connection, get_product_activity_by_gamechanger_id
+from snowflake_connector import get_snowflake_connection, get_product_activity_by_gamechanger_id, check_activity_exists
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(page_title="Customer 360", layout="wide")
@@ -415,8 +415,8 @@ else:
                 })
             
             # Get activity status
-            from snowflake_connector import check_activity_exists
-            with st.spinner("Checking activity status..."):
+            
+        with st.spinner("Checking activity status..."):
                 activity_status = check_activity_exists(account_ids)
             
             # Add green circle indicators to IDs that have activity
