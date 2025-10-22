@@ -104,7 +104,7 @@ def get_amp_activity_by_customer_id(amp_ampcustomer_id) -> pd.DataFrame:
             amp.YTD
         FROM PROD_DWH.DWH.FACT_AMP_PURCHASE_DATA amp
         LEFT JOIN PROD_DWH.DWH.DIM_ACCOUNT cust
-            ON amp.ACCOUNT_CUSTOMER_UUID = cust.ACCOUNT_UUID
+            ON amp.AMPCUSTOMER_ID = cust.AMP_AMPCUSTOMER_ID
         LEFT JOIN PROD_DWH.DWH.DIM_ACCOUNT mfr
             ON amp.CCODE = mfr.AMP_CLIENTS_CCODE
         LEFT JOIN PROD_DWH.DWH.DIM_PRODUCT prod
