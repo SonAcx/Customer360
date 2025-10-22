@@ -449,20 +449,20 @@ else:
             
             # Create column configuration with proper sizing
             column_config = {
-                "Gamechanger ID": st.column_config.TextColumn("Gamechanger ID", width="small"),
-                "Primary Employee": st.column_config.TextColumn("Primary Employee", width="medium"),
-                "AMP Customer ID": st.column_config.TextColumn("AMP Cust ID", width="small"),
-                "Firefly ID": st.column_config.TextColumn("Firefly ID", width="small"),
-                "Name": st.column_config.TextColumn("Account Name", width="medium"),
-                "Address": st.column_config.TextColumn("Address", width="medium"),
-                "City": st.column_config.TextColumn("City", width="medium"),
-                "State": st.column_config.TextColumn("State", width="small"),
-                "Zip": st.column_config.TextColumn("Zip", width="small"),
-                "LLO": st.column_config.TextColumn("LLO", width="small"),
-                "Market": st.column_config.TextColumn("Market", width="medium"),
-                "Zone": st.column_config.TextColumn("Zone", width="medium"),
-                "Account Type": st.column_config.TextColumn("Type", width="medium"),
-                "Primary Distributor": st.column_config.TextColumn("Primary Distributor", width="medium")
+                "Gamechanger ID": st.column_config.TextColumn("Gamechanger ID"),
+                "Primary Employee": st.column_config.TextColumn("Primary Employee"),
+                "AMP Customer ID": st.column_config.TextColumn("AMP Cust ID"),
+                "Firefly ID": st.column_config.TextColumn("Firefly ID"),
+                "Name": st.column_config.TextColumn("Account Name"),
+                "Address": st.column_config.TextColumn("Address"),
+                "City": st.column_config.TextColumn("City"),
+                "State": st.column_config.TextColumn("State"),
+                "Zip": st.column_config.TextColumn("Zip"),
+                "LLO": st.column_config.TextColumn("LLO"),
+                "Market": st.column_config.TextColumn("Market"),
+                "Zone": st.column_config.TextColumn("Zone"),
+                "Account Type": st.column_config.TextColumn("Type"),
+                "Primary Distributor": st.column_config.TextColumn("Primary Distributor")
             }
             
             # Display interactive dataframe
