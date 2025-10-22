@@ -83,42 +83,53 @@ def get_amp_activity_by_customer_id(amp_ampcustomer_id) -> pd.DataFrame:
     query = """
         SELECT 
             amp.AMPCUSTOMER_ID,
+            cust.AMP_DATA_SOURCE AS "GPO",
             mfr.AMP_CLIENTS_CLIENT AS "CLIENT_NAME",
-            amp.CCODE,
             amp.DISTRIBUTOR,
-            amp.DIST_CODE,
             amp.ITEM_ID,
             prod.PRODUCT_NAME,
             prod.SKU,
             prod.AMP_CATEGORY AS "CATEGORY",
             prod.AMP_SUB_CATEGORY AS "SUB_CATEGORY",
+            amp.CYM,
             amp.LYM,
             amp.LYTD,
-            amp.MAGO_2,
-            amp.MAGO_3,
-            amp.MAGO_4,
-            amp.MAGO_5,
-            amp.MAGO_6,
+            amp.MAGO_6 AS "6_MONTHS_AGO",
+            amp.MAGO_5 AS "5_MONTHS_AGO",
+            amp.MAGO_4 AS "4_MONTHS_AGO",
+            amp.MAGO_3 AS "3_MONTHS_AGO",
+            amp.MAGO_2 AS "2_MONTHS_AGO",
             amp.PERIOD,
             amp.UOM,
             amp.YTD
         FROM PROD_DWH.DWH.FACT_AMP_PURCHASE_DATA amp
+        LEFT JOIN PROD_DWH.DWH.DIM_ACCOUNT cust
+            ON amp.ACCOUNT_CUSTOMER_UUID = cust.ACCOUNT_UUID
         LEFT JOIN PROD_DWH.DWH.DIM_ACCOUNT mfr
             ON amp.CCODE = mfr.AMP_CLIENTS_CCODE
         LEFT JOIN PROD_DWH.DWH.DIM_PRODUCT prod
             ON amp.PRODUCT_UUID = prod.PRODUCT_UUID
         WHERE amp.AMPCUSTOMER_ID = %s
+          AND (amp.YTD IS NOT NULL 
+               OR amp.LYM IS NOT NULL 
+               OR amp.LYTD IS NOT NULL
+               OR amp.CYM IS NOT NULL)
         ORDER BY amp.PERIOD DESC
     """
     try:
         df = pd.read_sql(query, conn, params=(amp_ampcustomer_id,))
         
-        # Rename columns to uppercase
+        # Rename columns to uppercase with proper spacing
         df = df.rename(columns={
-            'AMPCUSTOMER_ID': 'AMPCUSTOMER_ID',
+            'AMPCUSTOMER_ID': 'AMP CUSTOMER ID',
             'CLIENT_NAME': 'CLIENT NAME',
             'PRODUCT_NAME': 'PRODUCT NAME',
-            'SUB_CATEGORY': 'SUB CATEGORY'
+            'SUB_CATEGORY': 'SUB CATEGORY',
+            '6_MONTHS_AGO': '6 MONTHS AGO',
+            '5_MONTHS_AGO': '5 MONTHS AGO',
+            '4_MONTHS_AGO': '4 MONTHS AGO',
+            '3_MONTHS_AGO': '3 MONTHS AGO',
+            '2_MONTHS_AGO': '2 MONTHS AGO'
         })
         
         return df
