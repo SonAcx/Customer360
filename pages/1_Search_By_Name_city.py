@@ -442,8 +442,8 @@ else:
             
             # Convert AMP Customer ID to string and replace None/NaN values with empty strings
             page_df['AMP Customer ID'] = page_df['AMP Customer ID'].apply(
-                lambda x: '' if pd.isna(x) or x == 0 or x == '' else str(int(float(x)))
-            )
+    lambda x: '' if pd.isna(x) or x == 0 or x == '' else str(x) if isinstance(x, str) else str(int(float(x)))
+)
             page_df = page_df.fillna('')
             
             # Create column configuration with proper sizing
