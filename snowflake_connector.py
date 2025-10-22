@@ -36,7 +36,8 @@ def get_product_activity_by_gamechanger_id(account18_id: str) -> pd.DataFrame:
     conn = get_snowflake_connection()
     query = """
         SELECT 
-            p.CREATEDDATE,
+            p.ACTIVITY_START_DATE__C,
+            p.ACTIVITY_END_DATE__C,
             p.TF_PRODUCT_NAME__C,
             p.TF_PRODUCT_SKU__C,
             p.TF_PRODUCTCLIENTNAME__C,
@@ -44,25 +45,29 @@ def get_product_activity_by_gamechanger_id(account18_id: str) -> pd.DataFrame:
             p.PIPELINE_ACTIVITY__C,
             p.PRODUCTSTATUS__C,
             p.QUANTITY_ENTERED__C,
+            p.WHAT_ARE_NEXT_STEPS__C,
             p.BIG_HIT_CLIENT__C
         FROM PROD_DWH.DWH.DIM_ACCOUNT a
         JOIN PROD_DWH.DWH.DIM_PRODUCTACTIVITY p
             ON a.ACCOUNT_UUID = p.ACCOUNT_OPPERATOR_UUID
         WHERE a.SF_ACCOUNT18_ID__C = %s
-        ORDER BY p.CREATEDDATE DESC
+        ORDER BY p.ACTIVITY_START_DATE__C DESC
     """
     try:
         df = pd.read_sql(query, conn, params=(account18_id,))
         
         # Rename columns after fetching
         df = df.rename(columns={
+            'ACTIVITY_START_DATE__C': 'START_DATE',
+            'ACTIVITY_END_DATE__C': 'END_DATE',
             'TF_PRODUCT_NAME__C': 'PRODUCT_NAME',
             'TF_PRODUCT_SKU__C': 'PRODUCT_SKU',
             'TF_PRODUCTCLIENTNAME__C': 'CLIENT_NAME',
             'TF_PRODUCTCATEGORY__C': 'PRODUCT_CATEGORY',
             'PIPELINE_ACTIVITY__C': 'PIPELINE_ACTIVITY',
             'PRODUCTSTATUS__C': 'PRODUCT_STATUS',
-            'QUANTITY_ENTERED__C': 'QUANTITY_SOLD'
+            'QUANTITY_ENTERED__C': 'QUANTITY_SOLD',
+            'WHAT_ARE_NEXT_STEPS__C': 'NEXT_STEPS'
         })
         
         return df
