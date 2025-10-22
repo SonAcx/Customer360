@@ -256,15 +256,13 @@ if st.session_state.page == 'activity':
                 if amp_id_value:
                     amp_activity_df = get_amp_activity_by_customer_id(amp_id_value)
                     
-                    if amp_activity_df.empty:
-                        st.info("No AMP activity found for this account.")
-                    else:
-                        st.success(f"Found {len(amp_activity_df)} AMP activity records")
-                        
-                        # Replace None/NaN with empty strings
-                        amp_activity_df = amp_activity_df.fillna('')
-                        
-                        st.dataframe(amp_activity_df, use_container_width=False, height=400, hide_index=True)
+                    if not amp_activity_df.empty:
+    st.success(f"Found {len(amp_activity_df)} AMP activity records")
+    
+    # Replace None/NaN with empty strings
+    amp_activity_df = amp_activity_df.fillna('')
+    
+    st.dataframe(amp_activity_df, use_container_width=False, height=400, hide_index=True)
                 else:
                     st.info("No valid AMP Customer ID available to fetch AMP activity.")
         else:
