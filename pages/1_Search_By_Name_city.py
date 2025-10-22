@@ -193,9 +193,11 @@ if st.session_state.page == 'activity':
         # Salesforce Activity Section
         st.markdown("## 📊 Salesforce Product Activity")
         if gamechanger_id and pd.notna(gamechanger_id) and gamechanger_id != '':
+        # Remove green circle emoji from ID
+        gamechanger_id_clean = str(gamechanger_id).replace(' 🟢', '').strip()
             with st.spinner("Loading Salesforce product activity..."):
                 import importlib
-                import snowflake_connector
+                sf_activity_df = snowflake_connector.get_product_activity_by_gamechanger_id(gamechanger_id_clean)
                 importlib.reload(snowflake_connector)
                 sf_activity_df = snowflake_connector.get_product_activity_by_gamechanger_id(gamechanger_id)
             
