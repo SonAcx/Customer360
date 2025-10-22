@@ -111,3 +111,60 @@ def get_amp_activity_by_customer_id(amp_ampcustomer_id) -> pd.DataFrame:
         return df
     finally:
         conn.close()
+
+def check_activity_exists(account_ids: list) -> dict:
+    """
+    Check which accounts have SF and/or AMP activity.
+    Returns dict with format: {gamechanger_id: {'has_sf': bool, 'has_amp': bool}, ...}
+    """
+    conn = get_snowflake_connection()
+    
+    results = {}
+    
+    try:
+        # Check for Salesforce activity
+        sf_ids = [aid['sf_id'] for aid in account_ids if aid.get('sf_id')]
+        if sf_ids:
+            placeholders = ','.join(['%s'] * len(sf_ids))
+            sf_query = f"""
+                SELECT DISTINCT a.SF_ACCOUNT18_ID__C
+                FROM PROD_DWH.DWH.DIM_ACCOUNT a
+                JOIN PROD_DWH.DWH.DIM_PRODUCTACTIVITY p
+                    ON a.ACCOUNT_UUID = p.ACCOUNT_OPPERATOR_UUID
+                WHERE a.SF_ACCOUNT18_ID__C IN ({placeholders})
+            """
+            sf_df = pd.read_sql(sf_query, conn, params=tuple(sf_ids))
+            sf_with_activity = set(sf_df['SF_ACCOUNT18_ID__C'].tolist())
+        else:
+            sf_with_activity = set()
+        
+        # Check for AMP activity
+        amp_ids = [aid['amp_id'] for aid in account_ids if aid.get('amp_id')]
+        if amp_ids:
+            placeholders = ','.join(['%s'] * len(amp_ids))
+            amp_query = f"""
+                SELECT DISTINCT AMPCUSTOMER_ID
+                FROM PROD_DWH.DWH.FACT_AMP_PURCHASE_DATA
+                WHERE AMPCUSTOMER_ID IN ({placeholders})
+            """
+            amp_df = pd.read_sql(amp_query, conn, params=tuple(amp_ids))
+            amp_with_activity = set(amp_df['AMPCUSTOMER_ID'].tolist())
+        else:
+            amp_with_activity = set()
+        
+        # Build results dict
+        for aid in account_ids:
+            sf_id = aid.get('sf_id')
+            amp_id = aid.get('amp_id')
+            
+            key = str(sf_id) if sf_id else str(amp_id)
+            
+            results[key] = {
+                'has_sf': sf_id in sf_with_activity if sf_id else False,
+                'has_amp': amp_id in amp_with_activity if amp_id else False
+            }
+        
+        return results
+        
+    finally:
+        conn.close()
