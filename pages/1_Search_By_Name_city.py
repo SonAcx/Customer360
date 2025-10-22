@@ -165,8 +165,10 @@ if st.session_state.page == 'activity':
         st.markdown("## 📊 Salesforce Product Activity")
         if gamechanger_id and pd.notna(gamechanger_id) and gamechanger_id != '':
             with st.spinner("Loading Salesforce product activity..."):
-                from snowflake_connector import get_product_activity_by_gamechanger_id
-                sf_activity_df = get_product_activity_by_gamechanger_id(gamechanger_id)
+    import importlib
+    import snowflake_connector
+    importlib.reload(snowflake_connector)
+    sf_activity_df = snowflake_connector.get_product_activity_by_gamechanger_id(gamechanger_id)
             
             if sf_activity_df.empty:
                 st.info("No Salesforce product activity found for this account.")
