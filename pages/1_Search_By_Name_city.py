@@ -167,20 +167,20 @@ if st.session_state.page == 'activity':
                 from snowflake_connector import get_product_activity_by_gamechanger_id
                 sf_activity_df = get_product_activity_by_gamechanger_id(gamechanger_id)
             
-            if sf_activity_df.empty:
-                st.info("No Salesforce product activity found for this account.")
-            else:
-                st.success(f"Found {len(sf_activity_df)} Salesforce product activity records")
-                
-                # Replace None/NaN with empty strings
-                sf_activity_df = sf_activity_df.fillna('')
-                
-               # Display the dataframe with all columns
-st.dataframe(sf_activity_df, use_container_width=True, height=400, hide_index=True)
+           if sf_activity_df.empty:
+            st.info("No Salesforce product activity found for this account.")
         else:
-            st.info("No Gamechanger ID available to fetch Salesforce activity.")
-        
-        st.markdown("---")
+            st.success(f"Found {len(sf_activity_df)} Salesforce product activity records")
+            
+            # Replace None/NaN with empty strings
+            sf_activity_df = sf_activity_df.fillna('')
+            
+            # Display the dataframe with all columns
+            st.dataframe(sf_activity_df, use_container_width=True, height=400, hide_index=True)
+    else:
+        st.info("No Gamechanger ID available to fetch Salesforce activity.")
+    
+    st.markdown("---")
         
         # AMP Activity Section
        
