@@ -414,9 +414,9 @@ else:
                     'amp_id': amp_id
                 })
             
-            # Get activity status
+           # Get activity status
             
-        with st.spinner("Checking activity status..."):
+            with st.spinner("Checking activity status..."):
                 activity_status = check_activity_exists(account_ids)
             
             # Add green circle indicators to IDs that have activity
