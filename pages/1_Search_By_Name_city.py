@@ -212,7 +212,6 @@ if st.session_state.page == 'activity':
                 st.dataframe(
                     sf_activity_df, 
                     use_container_width=True, 
-                    height=None,  # Auto-adjust height based on number of rows
                     hide_index=True,
                     column_config={
                         "START_DATE": st.column_config.DatetimeColumn("START_DATE", format="YYYY-MM-DD"),
