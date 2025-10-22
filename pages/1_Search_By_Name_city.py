@@ -88,6 +88,10 @@ st.markdown("""
     [data-testid="stDataFrame"] th {
         border: 1px solid #003366 !important;
         text-align: center !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        padding: 8px !important;
+        min-width: 100px !important;
     }
     
     /* Center all header text */
@@ -227,27 +231,6 @@ if st.session_state.page == 'activity':
                     }
                 )
                 
-                # Display the dataframe with all columns
-                # Display the dataframe with all columns
-                st.dataframe(
-                    sf_activity_df, 
-                    use_container_width=True, 
-                    hide_index=True,
-                    column_config={
-                        "START_DATE": st.column_config.DatetimeColumn("START_DATE", format="YYYY-MM-DD"),
-                        "CLOSED_DATE": st.column_config.DateColumn("CLOSED_DATE", format="YYYY-MM-DD"),
-                        "ACTIVITY_STATUS": st.column_config.TextColumn("ACTIVITY_STATUS", width="medium"),
-                        "PRODUCT_NAME": st.column_config.TextColumn("PRODUCT_NAME", width="large"),
-                        "PRODUCT_SKU": st.column_config.TextColumn("PRODUCT_SKU", width="small"),
-                        "PRODUCT_PACK": st.column_config.TextColumn("PRODUCT_PACK", width="small"),
-                        "CLIENT_NAME": st.column_config.TextColumn("CLIENT_NAME", width="medium"),
-                        "PRODUCT_CATEGORY": st.column_config.TextColumn("PRODUCT_CATEGORY", width="medium"),
-                        "PIPELINE_ACTIVITY": st.column_config.TextColumn("PIPELINE_ACTIVITY", width="medium"),
-                        "PRODUCT_STATUS": st.column_config.TextColumn("PRODUCT_STATUS", width="small"),
-                        "QUANTITY_SOLD": st.column_config.TextColumn("QUANTITY_SOLD", width="small"),
-                        "NEXT_STEPS": st.column_config.TextColumn("NEXT_STEPS", width="large")
-                    }
-                )
         else:
             st.info("No Gamechanger ID available to fetch Salesforce activity.")
         
