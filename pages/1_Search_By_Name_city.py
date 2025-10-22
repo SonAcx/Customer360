@@ -220,13 +220,13 @@ if st.session_state.page == 'activity':
                         "CLOSED_DATE": st.column_config.DateColumn("CLOSED_DATE", format="YYYY-MM-DD"),
                         "ACTIVITY_STATUS": st.column_config.TextColumn("ACTIVITY_STATUS", width="medium"),
                         "PRODUCT_NAME": st.column_config.TextColumn("PRODUCT_NAME", width="large"),
-                        "PRODUCT_SKU": st.column_config.TextColumn("PRODUCT_SKU", width="small"),
-                        "PRODUCT_PACK": st.column_config.TextColumn("PRODUCT_PACK", width="small"),
+                        "PRODUCT_SKU": st.column_config.TextColumn("PRODUCT_SKU", width="medium"),
+                        "PRODUCT_PACK": st.column_config.TextColumn("PRODUCT_PACK", width="medium"),
                         "CLIENT_NAME": st.column_config.TextColumn("CLIENT_NAME", width="medium"),
                         "PRODUCT_CATEGORY": st.column_config.TextColumn("PRODUCT_CATEGORY", width="medium"),
                         "PIPELINE_ACTIVITY": st.column_config.TextColumn("PIPELINE_ACTIVITY", width="medium"),
-                        "PRODUCT_STATUS": st.column_config.TextColumn("PRODUCT_STATUS", width="small"),
-                        "QUANTITY_SOLD": st.column_config.TextColumn("QUANTITY_SOLD", width="small"),
+                        "PRODUCT_STATUS": st.column_config.TextColumn("PRODUCT_STATUS", width="medium"),
+                        "QUANTITY_SOLD": st.column_config.TextColumn("QUANTITY_SOLD", width="medium"),
                         "NEXT_STEPS": st.column_config.TextColumn("NEXT_STEPS", width="large")
                     }
                 )
