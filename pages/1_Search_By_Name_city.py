@@ -213,21 +213,21 @@ if st.session_state.page == 'activity':
                 # Display the dataframe with horizontal scroll
                 st.dataframe(
                     sf_activity_df,
-                    use_container_width=False,  # Fit columns to content
+                    use_container_width=False,
                     hide_index=True,
                     column_config={
                         "START_DATE": st.column_config.DatetimeColumn("START_DATE", format="YYYY-MM-DD"),
                         "CLOSED_DATE": st.column_config.DateColumn("CLOSED_DATE", format="YYYY-MM-DD"),
-                        "ACTIVITY_STATUS": st.column_config.TextColumn("ACTIVITY_STATUS", width="medium"),
-                        "PRODUCT_NAME": st.column_config.TextColumn("PRODUCT_NAME", width="large"),
-                        "PRODUCT_SKU": st.column_config.TextColumn("PRODUCT_SKU", width="medium"),
-                        "PRODUCT_PACK": st.column_config.TextColumn("PRODUCT_PACK", width="medium"),
-                        "CLIENT_NAME": st.column_config.TextColumn("CLIENT_NAME", width="medium"),
-                        "PRODUCT_CATEGORY": st.column_config.TextColumn("PRODUCT_CATEGORY", width="medium"),
-                        "PIPELINE_ACTIVITY": st.column_config.TextColumn("PIPELINE_ACTIVITY", width="medium"),
-                        "PRODUCT_STATUS": st.column_config.TextColumn("PRODUCT_STATUS", width="medium"),
-                        "QUANTITY_SOLD": st.column_config.TextColumn("QUANTITY_SOLD", width="medium"),
-                        "NEXT_STEPS": st.column_config.TextColumn("NEXT_STEPS", width="large")
+                        "ACTIVITY_STATUS": st.column_config.TextColumn("ACTIVITY_STATUS"),
+                        "PRODUCT_NAME": st.column_config.TextColumn("PRODUCT_NAME"),
+                        "PRODUCT_SKU": st.column_config.TextColumn("PRODUCT_SKU"),
+                        "PRODUCT_PACK": st.column_config.TextColumn("PRODUCT_PACK"),
+                        "CLIENT_NAME": st.column_config.TextColumn("CLIENT_NAME"),
+                        "PRODUCT_CATEGORY": st.column_config.TextColumn("PRODUCT_CATEGORY"),
+                        "PIPELINE_ACTIVITY": st.column_config.TextColumn("PIPELINE_ACTIVITY"),
+                        "PRODUCT_STATUS": st.column_config.TextColumn("PRODUCT_STATUS"),
+                        "QUANTITY_SOLD": st.column_config.TextColumn("QUANTITY_SOLD"),
+                        "NEXT_STEPS": st.column_config.TextColumn("NEXT_STEPS")
                     }
                 )
                 
@@ -259,7 +259,7 @@ if st.session_state.page == 'activity':
                         # Replace None/NaN with empty strings
                         amp_activity_df = amp_activity_df.fillna('')
                         
-                        st.dataframe(amp_activity_df, use_container_width=True, height=400, hide_index=True)
+                        st.dataframe(amp_activity_df, use_container_width=False, height=400, hide_index=True)
                 else:
                     st.info("No valid AMP Customer ID available to fetch AMP activity.")
         else:
