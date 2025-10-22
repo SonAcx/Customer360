@@ -38,14 +38,14 @@ def get_product_activity_by_gamechanger_id(account18_id: str) -> pd.DataFrame:
         SELECT 
             p.CREATEDDATE,
             p.BIG_HIT_CLIENT__C,
-            p.NAME AS RECORD_ID,
-            p.TF_PRODUCT_NAME__C AS PRODUCT_NAME,
-            p.TF_PRODUCT_SKU__C AS PRODUCT_SKU,
-            p.TF_PRODUCTCLIENTNAME__C AS CLIENT_NAME,
-            p.TF_PRODUCTCATEGORY__C AS PRODUCT_CATEGORY,
-            p.PIPELINE_ACTIVITY__C AS PIPELINE_ACTIVITY,
-            p.PRODUCTSTATUS__C AS PRODUCT_STATUS,
-            p.QUANTITY_ENTERED__C AS QUANTITY_SOLD
+            p.NAME,
+            p.TF_PRODUCT_NAME__C,
+            p.TF_PRODUCT_SKU__C,
+            p.TF_PRODUCTCLIENTNAME__C,
+            p.TF_PRODUCTCATEGORY__C,
+            p.PIPELINE_ACTIVITY__C,
+            p.PRODUCTSTATUS__C,
+            p.QUANTITY_ENTERED__C
         FROM PROD_DWH.DWH.DIM_ACCOUNT a
         JOIN PROD_DWH.DWH.DIM_PRODUCTACTIVITY p
             ON a.ACCOUNT_UUID = p.ACCOUNT_OPPERATOR_UUID
@@ -54,6 +54,19 @@ def get_product_activity_by_gamechanger_id(account18_id: str) -> pd.DataFrame:
     """
     try:
         df = pd.read_sql(query, conn, params=(account18_id,))
+        
+        # Rename columns after fetching
+        df = df.rename(columns={
+            'NAME': 'RECORD_ID',
+            'TF_PRODUCT_NAME__C': 'PRODUCT_NAME',
+            'TF_PRODUCT_SKU__C': 'PRODUCT_SKU',
+            'TF_PRODUCTCLIENTNAME__C': 'CLIENT_NAME',
+            'TF_PRODUCTCATEGORY__C': 'PRODUCT_CATEGORY',
+            'PIPELINE_ACTIVITY__C': 'PIPELINE_ACTIVITY',
+            'PRODUCTSTATUS__C': 'PRODUCT_STATUS',
+            'QUANTITY_ENTERED__C': 'QUANTITY_SOLD'
+        })
+        
         return df
     finally:
         conn.close()
