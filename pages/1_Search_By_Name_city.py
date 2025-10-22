@@ -264,8 +264,6 @@ if st.session_state.page == 'activity':
                     
                     st.dataframe(amp_activity_df, use_container_width=False, height=400, hide_index=True)
                    else:
-                    st.info("No valid AMP Customer ID available to fetch AMP activity.")
-                   else:
                    st.info("No AMP Customer ID available to fetch AMP activity.")
 
 else:
