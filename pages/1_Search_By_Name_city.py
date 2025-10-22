@@ -393,6 +393,7 @@ else:
             # --- INTERACTIVE DATAFRAME WITH ROW SELECTION ---
             st.markdown("### 📋 Results")
             st.info("💡 **How to view activity:** Click the checkbox in any row to see that account's Salesforce and AMP activity details")
+            st.success("🟢 **Green circle indicator:** Accounts with a 🟢 next to their Gamechanger ID or AMP Customer ID have existing product activity data")
             
             page_df = df.iloc[start_idx:end_idx].reset_index(drop=True)
             
