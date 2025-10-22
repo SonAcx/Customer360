@@ -74,6 +74,32 @@ st.markdown("""
         background-color: #e6f0ff !important;
         border-left: 4px solid #003366 !important;
     }
+    
+    /* SALESFORCE PRODUCT ACTIVITY TABLE STYLING */
+    [data-testid="stDataFrame"] {
+        border: 2px solid #003366 !important;
+    }
+    
+    /* Darker table lines */
+    [data-testid="stDataFrame"] td {
+        border: 1px solid #003366 !important;
+    }
+    
+    [data-testid="stDataFrame"] th {
+        border: 1px solid #003366 !important;
+        text-align: center !important;
+    }
+    
+    /* Center all header text */
+    [data-testid="stDataFrame"] [data-testid="column-header"] {
+        text-align: center !important;
+        justify-content: center !important;
+    }
+    
+    /* Darker row borders */
+    [data-testid="stDataFrame"] tbody tr {
+        border-bottom: 1px solid #003366 !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -182,7 +208,27 @@ if st.session_state.page == 'activity':
                 st.write("🔍 DEBUG - Number of rows:", len(sf_activity_df))
                 
                 # Display the dataframe with all columns
-                st.dataframe(sf_activity_df, use_container_width=True, height=400, hide_index=True)
+                # Display the dataframe with all columns
+                st.dataframe(
+                    sf_activity_df, 
+                    use_container_width=True, 
+                    height=None,  # Auto-adjust height based on number of rows
+                    hide_index=True,
+                    column_config={
+                        "START_DATE": st.column_config.DatetimeColumn("START_DATE", format="YYYY-MM-DD"),
+                        "CLOSED_DATE": st.column_config.DateColumn("CLOSED_DATE", format="YYYY-MM-DD"),
+                        "ACTIVITY_STATUS": st.column_config.TextColumn("ACTIVITY_STATUS", width="medium"),
+                        "PRODUCT_NAME": st.column_config.TextColumn("PRODUCT_NAME", width="large"),
+                        "PRODUCT_SKU": st.column_config.TextColumn("PRODUCT_SKU", width="small"),
+                        "PRODUCT_PACK": st.column_config.TextColumn("PRODUCT_PACK", width="small"),
+                        "CLIENT_NAME": st.column_config.TextColumn("CLIENT_NAME", width="medium"),
+                        "PRODUCT_CATEGORY": st.column_config.TextColumn("PRODUCT_CATEGORY", width="medium"),
+                        "PIPELINE_ACTIVITY": st.column_config.TextColumn("PIPELINE_ACTIVITY", width="medium"),
+                        "PRODUCT_STATUS": st.column_config.TextColumn("PRODUCT_STATUS", width="small"),
+                        "QUANTITY_SOLD": st.column_config.TextColumn("QUANTITY_SOLD", width="small"),
+                        "NEXT_STEPS": st.column_config.TextColumn("NEXT_STEPS", width="large")
+                    }
+                )
         else:
             st.info("No Gamechanger ID available to fetch Salesforce activity.")
         
