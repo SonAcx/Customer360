@@ -38,6 +38,7 @@ def get_product_activity_by_gamechanger_id(account18_id: str) -> pd.DataFrame:
         SELECT 
             p.TF_ACTIVITYSTARTDATE__C,
             p.TF_MEETINGCLOSEDDATEONLY__C,
+            p.TF_ACTIVITYSTATUS__C,
             p.TF_PRODUCT_NAME__C,
             p.TF_PRODUCT_SKU__C,
             p.TF_PRODUCT_PACK__C,
@@ -46,8 +47,7 @@ def get_product_activity_by_gamechanger_id(account18_id: str) -> pd.DataFrame:
             p.PIPELINE_ACTIVITY__C,
             p.PRODUCTSTATUS__C,
             p.QUANTITY_ENTERED__C,
-            p.WHAT_ARE_NEXT_STEPS__C,
-            p.BIG_HIT_CLIENT__C
+            p.WHAT_ARE_NEXT_STEPS__C
         FROM PROD_DWH.DWH.DIM_ACCOUNT a
         JOIN PROD_DWH.DWH.DIM_PRODUCTACTIVITY p
             ON a.ACCOUNT_UUID = p.ACCOUNT_OPPERATOR_UUID
@@ -61,6 +61,7 @@ def get_product_activity_by_gamechanger_id(account18_id: str) -> pd.DataFrame:
         df = df.rename(columns={
             'TF_ACTIVITYSTARTDATE__C': 'START_DATE',
             'TF_MEETINGCLOSEDDATEONLY__C': 'CLOSED_DATE',
+            'TF_ACTIVITYSTATUS__C': 'ACTIVITY_STATUS',
             'TF_PRODUCT_NAME__C': 'PRODUCT_NAME',
             'TF_PRODUCT_SKU__C': 'PRODUCT_SKU',
             'TF_PRODUCT_PACK__C': 'PRODUCT_PACK',
