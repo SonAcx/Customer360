@@ -37,7 +37,7 @@ def get_product_activity_by_gamechanger_id(account18_id: str) -> pd.DataFrame:
     query = """
         SELECT 
             p.TF_ACTIVITYSTARTDATE__C,
-            p.TF_MEETINGCLODEDDATEONLY__C,
+            p.TF_MEETINGCLOSEDDATEONLY__C,
             p.TF_PRODUCT_NAME__C,
             p.TF_PRODUCT_SKU__C,
             p.TF_PRODUCT_PACK__C,
@@ -60,7 +60,7 @@ def get_product_activity_by_gamechanger_id(account18_id: str) -> pd.DataFrame:
         # Rename columns after fetching
         df = df.rename(columns={
             'TF_ACTIVITYSTARTDATE__C': 'START_DATE',
-            'TF_MEETINGCLODEDDATEONLY__C': 'CLOSED_DATE',
+            'TF_MEETINGCLOSEDDATEONLY__C': 'CLOSED_DATE',
             'TF_PRODUCT_NAME__C': 'PRODUCT_NAME',
             'TF_PRODUCT_SKU__C': 'PRODUCT_SKU',
             'TF_PRODUCT_PACK__C': 'PRODUCT_PACK',
