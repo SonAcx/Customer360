@@ -396,6 +396,50 @@ else:
             
             page_df = df.iloc[start_idx:end_idx].reset_index(drop=True)
             
+            # Check which accounts on this page have activity
+            account_ids = []
+            for _, row in page_df.iterrows():
+                sf_id = row['Gamechanger ID'] if pd.notna(row['Gamechanger ID']) and row['Gamechanger ID'] != '' else None
+                amp_id = row['AMP Customer ID']
+                if pd.notna(amp_id) and amp_id != '' and amp_id != 0:
+                    try:
+                        amp_id = int(float(amp_id))
+                    except:
+                        amp_id = None
+                else:
+                    amp_id = None
+                    
+                account_ids.append({
+                    'sf_id': sf_id,
+                    'amp_id': amp_id
+                })
+            
+            # Get activity status
+            from snowflake_connector import check_activity_exists
+            with st.spinner("Checking activity status..."):
+                activity_status = check_activity_exists(account_ids)
+            
+            # Add green circle indicators to IDs that have activity
+            for idx, row in page_df.iterrows():
+                gc_id = row['Gamechanger ID']
+                amp_id = row['AMP Customer ID']
+                
+                # Handle Gamechanger ID
+                if pd.notna(gc_id) and gc_id != '':
+                    status = activity_status.get(str(gc_id), {})
+                    if status.get('has_sf'):
+                        page_df.at[idx, 'Gamechanger ID'] = f"{gc_id} 🟢"
+                
+                # Handle AMP Customer ID
+                if pd.notna(amp_id) and amp_id != '' and amp_id != 0:
+                    try:
+                        amp_id_int = int(float(amp_id))
+                        status = activity_status.get(str(gc_id) if gc_id else str(amp_id_int), {})
+                        if status.get('has_amp'):
+                            page_df.at[idx, 'AMP Customer ID'] = f"{amp_id_int} 🟢"
+                    except:
+                        pass
+            
             # Convert AMP Customer ID to string and replace None/NaN values with empty strings
             page_df['AMP Customer ID'] = page_df['AMP Customer ID'].apply(
                 lambda x: '' if pd.isna(x) or x == 0 or x == '' else str(int(float(x)))
