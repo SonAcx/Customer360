@@ -37,15 +37,14 @@ def get_product_activity_by_gamechanger_id(account18_id: str) -> pd.DataFrame:
     query = """
         SELECT 
             p.CREATEDDATE,
-            p.BIG_HIT_CLIENT__C,
-            p.NAME,
             p.TF_PRODUCT_NAME__C,
             p.TF_PRODUCT_SKU__C,
             p.TF_PRODUCTCLIENTNAME__C,
             p.TF_PRODUCTCATEGORY__C,
             p.PIPELINE_ACTIVITY__C,
             p.PRODUCTSTATUS__C,
-            p.QUANTITY_ENTERED__C
+            p.QUANTITY_ENTERED__C,
+            p.BIG_HIT_CLIENT__C
         FROM PROD_DWH.DWH.DIM_ACCOUNT a
         JOIN PROD_DWH.DWH.DIM_PRODUCTACTIVITY p
             ON a.ACCOUNT_UUID = p.ACCOUNT_OPPERATOR_UUID
@@ -57,7 +56,6 @@ def get_product_activity_by_gamechanger_id(account18_id: str) -> pd.DataFrame:
         
         # Rename columns after fetching
         df = df.rename(columns={
-            'NAME': 'RECORD_ID',
             'TF_PRODUCT_NAME__C': 'PRODUCT_NAME',
             'TF_PRODUCT_SKU__C': 'PRODUCT_SKU',
             'TF_PRODUCTCLIENTNAME__C': 'CLIENT_NAME',
