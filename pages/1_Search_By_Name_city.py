@@ -175,24 +175,8 @@ if st.session_state.page == 'activity':
                 # Replace None/NaN with empty strings
                 sf_activity_df = sf_activity_df.fillna('')
                 
-                # Display only the columns we want in the order we want
-                display_columns = [
-                    'CREATEDDATE',
-                    'PRODUCT_NAME',
-                    'PRODUCT_SKU',
-                    'CLIENT_NAME',
-                    'PRODUCT_CATEGORY',
-                    'PIPELINE_ACTIVITY',
-                    'PRODUCT_STATUS',
-                    'QUANTITY_SOLD',
-                    'BIG_HIT_CLIENT__C'
-                ]
-                
-                # Filter to only show existing columns
-                available_cols = [col for col in display_columns if col in sf_activity_df.columns]
-                sf_display_df = sf_activity_df[available_cols]
-                
-                st.dataframe(sf_display_df, use_container_width=True, height=400, hide_index=True)
+               # Display the dataframe with all columns
+st.dataframe(sf_activity_df, use_container_width=True, height=400, hide_index=True)
         else:
             st.info("No Gamechanger ID available to fetch Salesforce activity.")
         
