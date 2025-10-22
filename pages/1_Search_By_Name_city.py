@@ -267,7 +267,7 @@ if st.session_state.page == 'activity':
 
 else:
     # --- MAIN SEARCH PAGE ---
-    st.markdown("<h1 style='text-align:center; color:#003366;'>CUSTOMER 360</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align:center; color:#003366; font-size:56px; font-weight:bold;'>CUSTOMER 360</h1>", unsafe_allow_html=True)
 
     # --- FILTERS ROW ---
     st.markdown("<h3 style='color:black;'>🔍 Search Filters</h3>", unsafe_allow_html=True)
@@ -392,8 +392,8 @@ else:
 
             # --- INTERACTIVE DATAFRAME WITH ROW SELECTION ---
             st.markdown("### 📋 Results")
-            st.info("💡 **How to view activity:** Click the checkbox in any row to see that account's Salesforce and AMP activity details")
-            st.success("🟢 **Green circle indicator:** Accounts with a 🟢 next to their Gamechanger ID or AMP Customer ID have existing product activity data")
+            st.markdown("💡 **How to view activity:** Click the checkbox in any row to view details")
+            st.markdown("🟢 **Green circles** indicate IDs with existing product activity")
             
             page_df = df.iloc[start_idx:end_idx].reset_index(drop=True)
             
