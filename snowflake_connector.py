@@ -84,10 +84,15 @@ def get_amp_activity_by_customer_id(amp_ampcustomer_id) -> pd.DataFrame:
         SELECT 
             amp.AMPCUSTOMER_ID,
             cust.NAME AS "Customer Name",
-            mfr.NAME AS "Client Name",
+            mfr.AMP_CLIENTS_CLIENT AS "Client Name",
+            amp.CCODE,
             amp.DISTRIBUTOR,
             amp.DIST_CODE,
             amp.ITEM_ID,
+            prod.PRODUCT_NAME AS "Product Name",
+            prod.SKU,
+            prod.AMP_CATEGORY AS "Category",
+            prod.AMP_SUB_CATEGORY AS "Sub Category",
             amp.LYM,
             amp.LYTD,
             amp.MAGO_2,
@@ -100,9 +105,11 @@ def get_amp_activity_by_customer_id(amp_ampcustomer_id) -> pd.DataFrame:
             amp.YTD
         FROM PROD_DWH.DWH.FACT_AMP_PURCHASE_DATA amp
         LEFT JOIN PROD_DWH.DWH.DIM_ACCOUNT cust
-            ON amp.AMPCUSTOMER_ID = cust.AMP_AMPCUSTOMER_ID
+            ON amp.ACCOUNT_CUSTOMER_UUID = cust.ACCOUNT_UUID
         LEFT JOIN PROD_DWH.DWH.DIM_ACCOUNT mfr
-            ON amp.ACCOUNT_MANUFACTURER_UUID = mfr.ACCOUNT_UUID
+            ON amp.CCODE = mfr.AMP_CLIENTS_CCODE
+        LEFT JOIN PROD_DWH.DWH.DIM_PRODUCT prod
+            ON amp.PRODUCT_UUID = prod.PRODUCT_UUID
         WHERE amp.AMPCUSTOMER_ID = %s
         ORDER BY amp.PERIOD DESC
     """
