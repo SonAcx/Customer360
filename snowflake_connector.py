@@ -38,7 +38,11 @@ def get_product_activity_by_gamechanger_id(account18_id: str) -> pd.DataFrame:
         SELECT 
             p.CREATEDDATE,
             p.BIG_HIT_CLIENT__C,
-            p.NAME,
+            p.NAME AS RECORD_ID,
+            p.TF_PRODUCT_NAME__C AS PRODUCT_NAME,
+            p.TF_PRODUCT_SKU__C AS PRODUCT_SKU,
+            p.TF_PRODUCTCLIENTNAME__C AS CLIENT_NAME,
+            p.TF_PRODUCTCATEGORY__C AS PRODUCT_CATEGORY,
             p.PIPELINE_ACTIVITY__C,
             p.PRODUCTSTATUS__C,
             p.QUANTITY_ENTERED__C
@@ -46,6 +50,7 @@ def get_product_activity_by_gamechanger_id(account18_id: str) -> pd.DataFrame:
         JOIN PROD_DWH.DWH.DIM_PRODUCTACTIVITY p
             ON a.ACCOUNT_UUID = p.ACCOUNT_OPPERATOR_UUID
         WHERE a.SF_ACCOUNT18_ID__C = %s
+        ORDER BY p.CREATEDDATE DESC
     """
     try:
         df = pd.read_sql(query, conn, params=(account18_id,))
