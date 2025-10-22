@@ -161,21 +161,39 @@ if st.session_state.page == 'activity':
         amp_customer_id = account.get('AMP Customer ID')
         
         # Salesforce Activity Section
-        st.markdown("## 📊 Salesforce Product Activity")
-        if gamechanger_id and pd.notna(gamechanger_id) and gamechanger_id != '':
-            with st.spinner("Loading Salesforce product activity..."):
-                from snowflake_connector import get_product_activity_by_gamechanger_id
-                sf_activity_df = get_product_activity_by_gamechanger_id(gamechanger_id)
-            
-            if sf_activity_df.empty:
-                st.info("No Salesforce product activity found for this account.")
-            else:
-                st.success(f"Found {len(sf_activity_df)} Salesforce product activity records")
-                
-                # Replace None/NaN with empty strings
-                sf_activity_df = sf_activity_df.fillna('')
-                
-                st.dataframe(sf_activity_df, use_container_width=True, height=400, hide_index=True)
+        # Salesforce Activity Section
+st.markdown("## 📊 Salesforce Product Activity")
+if gamechanger_id and pd.notna(gamechanger_id) and gamechanger_id != '':
+    with st.spinner("Loading Salesforce product activity..."):
+        from snowflake_connector import get_product_activity_by_gamechanger_id
+        sf_activity_df = get_product_activity_by_gamechanger_id(gamechanger_id)
+    
+    if sf_activity_df.empty:
+        st.info("No Salesforce product activity found for this account.")
+    else:
+        st.success(f"Found {len(sf_activity_df)} Salesforce product activity records")
+        
+        # Replace None/NaN with empty strings
+        sf_activity_df = sf_activity_df.fillna('')
+        
+        # Display only the columns we want in the order we want
+        display_columns = [
+            'CREATEDDATE',
+            'PRODUCT_NAME',
+            'PRODUCT_SKU',
+            'CLIENT_NAME',
+            'PRODUCT_CATEGORY',
+            'PIPELINE_ACTIVITY',
+            'PRODUCT_STATUS',
+            'QUANTITY_SOLD',
+            'BIG_HIT_CLIENT__C'
+        ]
+        
+        # Filter to only show existing columns
+        available_cols = [col for col in display_columns if col in sf_activity_df.columns]
+        sf_display_df = sf_activity_df[available_cols]
+        
+        st.dataframe(sf_display_df, use_container_width=True, height=400, hide_index=True)
         else:
             st.info("No Gamechanger ID available to fetch Salesforce activity.")
         
