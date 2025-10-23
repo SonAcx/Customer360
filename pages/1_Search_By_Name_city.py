@@ -367,22 +367,22 @@ else:
                 import plotly.express as px
                 
                 fig = px.scatter_mapbox(
-                    map_data,
-                    lat='LATITUDE',
-                    lon='LONGITUDE',
-                    hover_name='Name',
-                    hover_data={
-                        'LATITUDE': False,
-                        'LONGITUDE': False,
-                        'City': True,
-                        'State': True,
-                        'Market': True,
-                        'Zone': True
-                    },
-                    zoom=5,
-                    height=500,
-                    color_discrete_sequence=['#003366']  # Acxion blue
-                )
+    map_data,
+    lat='LATITUDE',
+    lon='LONGITUDE',
+    hover_name='Name',
+    hover_data={
+        'LATITUDE': False,
+        'LONGITUDE': False,
+        'City': True,
+        'State': True,
+        'Market': True,
+        'Zone': True
+    },
+    zoom=5,
+    height=500,
+    color_discrete_sequence=['#003366']  # Acxion blue
+)
                 
                 fig.update_layout(
                     mapbox_style="open-street-map",
