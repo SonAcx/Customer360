@@ -333,6 +333,8 @@ else:
                 a.SF_LARGELEVERAGEOPERATOR__C AS "LLO",
                 a.SF_GEOMARKET_NAME__C AS "Market",
                 a.SF_GEOZONE_NAME__C AS "Zone",
+                a.DS_LATITUDE AS "LATITUDE",
+                a.DS_LONGITUDE AS "LONGITUDE",
                 a.DS_ACCOUNT_TYPE AS "Account Type"
             FROM PROD_DWH.DWH.DIM_ACCOUNT a
             LEFT JOIN amp_consolidation ac
