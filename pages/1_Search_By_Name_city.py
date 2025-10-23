@@ -83,6 +83,7 @@ st.markdown("""
     /* Darker table lines */
     [data-testid="stDataFrame"] td {
         border: 1px solid #003366 !important;
+        text-transform: uppercase !important;
     }
     
     [data-testid="stDataFrame"] th {
@@ -92,6 +93,7 @@ st.markdown("""
         word-wrap: break-word !important;
         padding: 8px !important;
         min-width: 100px !important;
+        font-weight: bold !important;
     }
     
     /* Center all header text */
@@ -208,11 +210,17 @@ if st.session_state.page == 'activity':
                 # Replace None/NaN with empty strings
                 sf_activity_df = sf_activity_df.fillna('')
                 
+                # Replace 'None' string with empty string for CLOSED_DATE
+                sf_activity_df['CLOSED_DATE'] = sf_activity_df['CLOSED_DATE'].replace('None', '')
+                
+                # Dynamic height based on rows (no empty rows)
+                table_height = min(len(sf_activity_df) * 35 + 38, 400)
+                
                 # Display the dataframe with horizontal scroll
                 st.dataframe(
                     sf_activity_df,
                     use_container_width=False,
-                    height=400,
+                    height=table_height,
                     hide_index=True,
                     column_config={
                         "START_DATE": st.column_config.DatetimeColumn("START_DATE", format="YYYY-MM-DD"),
@@ -263,7 +271,10 @@ if st.session_state.page == 'activity':
                         # Replace None/NaN with empty strings
                         amp_activity_df = amp_activity_df.fillna('')
                         
-                        st.dataframe(amp_activity_df, use_container_width=False, height=400, hide_index=True)
+                        # Dynamic height based on rows (no empty rows)
+                        table_height = min(len(amp_activity_df) * 35 + 38, 400)
+                        
+                        st.dataframe(amp_activity_df, use_container_width=False, height=table_height, hide_index=True)
                 else:
                     st.info("No valid AMP Customer ID available to fetch AMP activity.")
         else:
@@ -353,6 +364,12 @@ else:
             st.warning("No matches found.")
             st.session_state.current_page = 0
         else:
+            # Convert all text columns to uppercase (except IDs which need special handling)
+            for col in df.columns:
+                if col not in ['Gamechanger ID', 'AMP Customer ID', 'Firefly ID', 'Zip']:
+                    if df[col].dtype == 'object':
+                        df[col] = df[col].astype(str).str.upper()
+            
             # Create priority column for sorting
             # Priority 1: Has all 3 IDs (Gamechanger + AMP Customer + Firefly)
             # Priority 2: Has Gamechanger + AMP Customer (no Firefly)
@@ -486,26 +503,37 @@ else:
                 
                 return pd.Series([gc_display, amp_display])
             
+            # Format LLO column to show checkmarks instead of true/false
+            def format_llo(value):
+                if pd.notna(value):
+                    val_str = str(value).upper()
+                    if val_str in ['TRUE', '1', 'YES']:
+                        return "✓"
+                    elif val_str in ['FALSE', '0', 'NO']:
+                        return "✗"
+                return ""
+            
             # Apply formatting
             page_df[['Gamechanger ID', 'AMP Customer ID']] = page_df.apply(format_ids_with_indicators, axis=1)
+            page_df['LLO'] = page_df['LLO'].apply(format_llo)
             page_df = page_df.fillna('')
             
             # Create column configuration with proper sizing
             column_config = {
-                "Gamechanger ID": st.column_config.TextColumn("Gamechanger ID"),
-                "Primary Employee": st.column_config.TextColumn("Primary Employee"),
-                "AMP Customer ID": st.column_config.TextColumn("AMP Cust ID", width=350),
-                "Firefly ID": st.column_config.TextColumn("Firefly ID"),
-                "Name": st.column_config.TextColumn("Account Name"),
-                "Address": st.column_config.TextColumn("Address"),
-                "City": st.column_config.TextColumn("City"),
-                "State": st.column_config.TextColumn("State"),
-                "Zip": st.column_config.TextColumn("Zip"),
+                "Gamechanger ID": st.column_config.TextColumn("GAMECHANGER ID"),
+                "Primary Employee": st.column_config.TextColumn("PRIMARY EMPLOYEE"),
+                "AMP Customer ID": st.column_config.TextColumn("AMP CUST ID", width=350),
+                "Firefly ID": st.column_config.TextColumn("FIREFLY ID"),
+                "Name": st.column_config.TextColumn("ACCOUNT NAME"),
+                "Address": st.column_config.TextColumn("ADDRESS"),
+                "City": st.column_config.TextColumn("CITY"),
+                "State": st.column_config.TextColumn("STATE"),
+                "Zip": st.column_config.TextColumn("ZIP"),
                 "LLO": st.column_config.TextColumn("LLO"),
-                "Market": st.column_config.TextColumn("Market"),
-                "Zone": st.column_config.TextColumn("Zone"),
-                "Account Type": st.column_config.TextColumn("Type"),
-                "Primary Distributor": st.column_config.TextColumn("Primary Distributor")
+                "Market": st.column_config.TextColumn("MARKET"),
+                "Zone": st.column_config.TextColumn("ZONE"),
+                "Account Type": st.column_config.TextColumn("TYPE"),
+                "Primary Distributor": st.column_config.TextColumn("PRIMARY DISTRIBUTOR")
             }
             
             # Display interactive dataframe
