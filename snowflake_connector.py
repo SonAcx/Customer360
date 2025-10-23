@@ -224,11 +224,6 @@ def check_activity_exists(account_ids: list) -> dict:
                 """
                 amp_df = pd.read_sql(amp_query, conn, params=tuple(amp_ids_numeric))
                 
-                # DEBUG - See what the query returned
-                print(f"DEBUG AMP Query Results: {len(amp_df)} rows")
-                if not amp_df.empty:
-                    print(f"DEBUG Sample IDs with activity: {amp_df['ORIGINAL_ID'].head().tolist()}")
-                
                 # Safely convert IDs to strings
                 amp_with_activity = set()
                 if not amp_df.empty:
