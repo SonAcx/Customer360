@@ -149,7 +149,8 @@ def get_amp_activity_by_customer_id(amp_ampcustomer_id) -> pd.DataFrame:
 def check_activity_exists(account_ids: list) -> dict:
     """
     Check which accounts have SF and/or AMP activity.
-    Returns dict with format: {gamechanger_id: {'has_sf': bool, 'has_amp': bool}, ...}
+    Returns dict with format: {id: {'has_sf': bool, 'has_amp': bool}, ...}
+    Now checks each individual AMP ID separately for individual green circle indicators.
     """
     conn = get_snowflake_connection()
     
@@ -172,13 +173,28 @@ def check_activity_exists(account_ids: list) -> dict:
         else:
             sf_with_activity = set()
         
-        # Check for AMP activity using FF_ID consolidation
-        amp_ids = [aid['amp_id'] for aid in account_ids if aid.get('amp_id')]
-        if amp_ids:
-            placeholders = ','.join(['%s'] * len(amp_ids))
+        # Check for AMP activity - check EACH ID individually
+        amp_ids_to_check = []
+        for aid in account_ids:
+            amp_id = aid.get('amp_id')
+            if amp_id:
+                # If comma-separated, split and add each
+                amp_str = str(amp_id).strip()
+                if ',' in amp_str:
+                    for single_id in amp_str.split(','):
+                        single_id = single_id.strip()
+                        if single_id and single_id != '0':
+                            amp_ids_to_check.append(single_id)
+                else:
+                    if amp_str and amp_str != '0':
+                        amp_ids_to_check.append(amp_str)
+        
+        if amp_ids_to_check:
+            # Remove duplicates
+            amp_ids_to_check = list(set(amp_ids_to_check))
+            placeholders = ','.join(['%s'] * len(amp_ids_to_check))
             amp_query = f"""
                 WITH related_accounts AS (
-                    -- Find all AMP IDs that share the same FF_ID as the input IDs
                     SELECT DISTINCT a2.AMP_AMPCUSTOMER_ID, a1.AMP_AMPCUSTOMER_ID as ORIGINAL_ID
                     FROM PROD_DWH.DWH.DIM_ACCOUNT a1
                     JOIN PROD_DWH.DWH.DIM_ACCOUNT a2 
@@ -196,22 +212,41 @@ def check_activity_exists(account_ids: list) -> dict:
                 GROUP BY ra.ORIGINAL_ID
                 HAVING COUNT(DISTINCT amp.PURCHASE_UUID) > 0
             """
-            amp_df = pd.read_sql(amp_query, conn, params=tuple(amp_ids))
-            amp_with_activity = set(amp_df['ORIGINAL_ID'].tolist())
+            amp_df = pd.read_sql(amp_query, conn, params=tuple(amp_ids_to_check))
+            # Convert to string and handle any type issues
+            amp_with_activity = set(str(int(float(x))) for x in amp_df['ORIGINAL_ID'].tolist())
         else:
             amp_with_activity = set()
         
-        # Build results dict
+        # Build results dict - now includes ALL individual AMP IDs
         for aid in account_ids:
             sf_id = aid.get('sf_id')
             amp_id = aid.get('amp_id')
             
-            key = str(sf_id) if sf_id else str(amp_id)
+            # Add SF result
+            if sf_id:
+                results[str(sf_id)] = {
+                    'has_sf': sf_id in sf_with_activity,
+                    'has_amp': False
+                }
             
-            results[key] = {
-                'has_sf': sf_id in sf_with_activity if sf_id else False,
-                'has_amp': amp_id in amp_with_activity if amp_id else False
-            }
+            # Add AMP results - handle comma-separated
+            if amp_id:
+                amp_str = str(amp_id).strip()
+                if ',' in amp_str:
+                    for single_id in amp_str.split(','):
+                        single_id = single_id.strip()
+                        if single_id and single_id != '0':
+                            results[single_id] = {
+                                'has_sf': False,
+                                'has_amp': single_id in amp_with_activity
+                            }
+                else:
+                    if amp_str and amp_str != '0':
+                        results[amp_str] = {
+                            'has_sf': False,
+                            'has_amp': amp_str in amp_with_activity
+                        }
         
         return results
         
