@@ -190,31 +190,43 @@ def check_activity_exists(account_ids: list) -> dict:
                         amp_ids_to_check.append(amp_str)
         
         if amp_ids_to_check:
-            # Remove duplicates
+            # Remove duplicates and convert to integers
             amp_ids_to_check = list(set(amp_ids_to_check))
-            placeholders = ','.join(['%s'] * len(amp_ids_to_check))
-            amp_query = f"""
-                WITH related_accounts AS (
-                    SELECT DISTINCT a2.AMP_AMPCUSTOMER_ID, a1.AMP_AMPCUSTOMER_ID as ORIGINAL_ID
-                    FROM PROD_DWH.DWH.DIM_ACCOUNT a1
-                    JOIN PROD_DWH.DWH.DIM_ACCOUNT a2 
-                        ON a1.FF_ID = a2.FF_ID
-                    WHERE a1.AMP_AMPCUSTOMER_ID IN ({placeholders})
-                      AND a2.AMP_AMPCUSTOMER_ID IS NOT NULL
-                      AND a1.FF_ID IS NOT NULL
-                )
-                SELECT DISTINCT 
-                    ra.ORIGINAL_ID,
-                    COUNT(DISTINCT amp.PURCHASE_UUID) as activity_count
-                FROM related_accounts ra
-                JOIN PROD_DWH.DWH.FACT_AMP_PURCHASE_DATA amp
-                    ON ra.AMP_AMPCUSTOMER_ID = amp.AMPCUSTOMER_ID
-                GROUP BY ra.ORIGINAL_ID
-                HAVING COUNT(DISTINCT amp.PURCHASE_UUID) > 0
-            """
-            amp_df = pd.read_sql(amp_query, conn, params=tuple(amp_ids_to_check))
-            # Convert to string and handle any type issues
-            amp_with_activity = set(str(int(float(x))) for x in amp_df['ORIGINAL_ID'].tolist())
+            
+            # Convert string IDs to integers for the query
+            amp_ids_numeric = []
+            for amp_id in amp_ids_to_check:
+                try:
+                    amp_ids_numeric.append(int(float(amp_id)))
+                except:
+                    pass
+            
+            if amp_ids_numeric:
+                placeholders = ','.join(['%s'] * len(amp_ids_numeric))
+                amp_query = f"""
+                    WITH related_accounts AS (
+                        SELECT DISTINCT a2.AMP_AMPCUSTOMER_ID, a1.AMP_AMPCUSTOMER_ID as ORIGINAL_ID
+                        FROM PROD_DWH.DWH.DIM_ACCOUNT a1
+                        JOIN PROD_DWH.DWH.DIM_ACCOUNT a2 
+                            ON a1.FF_ID = a2.FF_ID
+                        WHERE a1.AMP_AMPCUSTOMER_ID IN ({placeholders})
+                          AND a2.AMP_AMPCUSTOMER_ID IS NOT NULL
+                          AND a1.FF_ID IS NOT NULL
+                    )
+                    SELECT DISTINCT 
+                        ra.ORIGINAL_ID,
+                        COUNT(DISTINCT amp.PURCHASE_UUID) as activity_count
+                    FROM related_accounts ra
+                    JOIN PROD_DWH.DWH.FACT_AMP_PURCHASE_DATA amp
+                        ON ra.AMP_AMPCUSTOMER_ID = amp.AMPCUSTOMER_ID
+                    GROUP BY ra.ORIGINAL_ID
+                    HAVING COUNT(DISTINCT amp.PURCHASE_UUID) > 0
+                """
+                amp_df = pd.read_sql(amp_query, conn, params=tuple(amp_ids_numeric))
+                # Convert to string for comparison
+                amp_with_activity = set(str(int(x)) for x in amp_df['ORIGINAL_ID'].tolist())
+            else:
+                amp_with_activity = set()
         else:
             amp_with_activity = set()
         
