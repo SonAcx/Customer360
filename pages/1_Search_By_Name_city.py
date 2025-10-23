@@ -238,6 +238,7 @@ if st.session_state.page == 'activity':
         
         # AMP Activity Section
        
+        amp_customer_id = account.get('AMP Customer ID')
         st.markdown("## 🛒 AMP Activity")
         if amp_customer_id and pd.notna(amp_customer_id) and amp_customer_id != '' and amp_customer_id != 0:
             with st.spinner("Loading AMP activity..."):
