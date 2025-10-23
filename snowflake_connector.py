@@ -223,12 +223,22 @@ def check_activity_exists(account_ids: list) -> dict:
                     HAVING COUNT(DISTINCT amp.PURCHASE_UUID) > 0
                 """
                 amp_df = pd.read_sql(amp_query, conn, params=tuple(amp_ids_numeric))
-                # Convert to string for comparison
-                amp_with_activity = set(str(int(x)) for x in amp_df['ORIGINAL_ID'].tolist())
-            else:
+
+amp_df = pd.read_sql(amp_query, conn, params=tuple(amp_ids_numeric))
+                
+                # DEBUG - See what the query returned
+                print(f"DEBUG AMP Query Results: {len(amp_df)} rows")
+                if not amp_df.empty:
+                    print(f"DEBUG Sample IDs with activity: {amp_df['ORIGINAL_ID'].head().tolist()}")
+                
+                # Safely convert IDs to strings
                 amp_with_activity = set()
-        else:
-            amp_with_activity = set()
+                if not amp_df.empty:
+                    for x in amp_df['ORIGINAL_ID'].tolist():
+                        try:
+                            amp_with_activity.add(str(int(float(x))))
+                        except:
+                            pass
         
         # Build results dict - now includes ALL individual AMP IDs
         for aid in account_ids:
