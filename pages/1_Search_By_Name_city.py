@@ -356,7 +356,45 @@ else:
                     return 3  # Only GC
                 else:
                     return 4  # Everything else
-            
+
+            # --- MAP VISUALIZATION ---
+            # Filter dataframe for valid coordinates
+            map_data = df[df['LATITUDE'].notna() & df['LONGITUDE'].notna()].copy()
+
+            if not map_data.empty:
+                st.markdown("### 🗺️ Territory Map")
+                
+                import plotly.express as px
+                
+                fig = px.scatter_mapbox(
+                    map_data,
+                    lat='LATITUDE',
+                    lon='LONGITUDE',
+                    hover_name='Name',
+                    hover_data={
+                        'LATITUDE': False,
+                        'LONGITUDE': False,
+                        'City': True,
+                        'State': True,
+                        'Market': True,
+                        'Zone': True
+                    },
+                    zoom=5,
+                    height=500,
+                    color_discrete_sequence=['#003366']  # Acxion blue
+                )
+                
+                fig.update_layout(
+                    mapbox_style="open-street-map",
+                    margin={"r":0,"t":0,"l":0,"b":0}
+                )
+                
+                st.plotly_chart(fig, use_container_width=True)
+                
+                st.markdown("---")
+            else:
+                st.info("📍 No accounts with location data found for this search")
+                
             def get_id_sort_key(row):
                 """Create a sort key based on which IDs exist"""
                 gc_id = row['Gamechanger ID']
