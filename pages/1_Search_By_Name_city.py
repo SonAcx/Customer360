@@ -203,6 +203,18 @@ if st.session_state.page == 'activity':
             # Replace 'None' string with empty string for CLOSED_DATE
             sf_activity_df['CLOSED_DATE'] = sf_activity_df['CLOSED_DATE'].replace('None', '')
             
+            # Format PIPELINE_ACTIVITY column with GREEN checkmarks
+            def format_pipeline(value):
+                if pd.notna(value) and str(value).strip():
+                    val_str = str(value).upper()
+                    if val_str in ['TRUE', '1', 'YES']:
+                        return "✅"
+                    elif val_str in ['FALSE', '0', 'NO']:
+                        return "✗"
+                return ""
+            
+            sf_activity_df['PIPELINE_ACTIVITY'] = sf_activity_df['PIPELINE_ACTIVITY'].apply(format_pipeline)
+            
             # Dynamic height based on rows (no empty rows)
             table_height = min(len(sf_activity_df) * 35 + 38, 400)
             
@@ -472,11 +484,11 @@ else:
                 
                 return pd.Series([gc_display, amp_display])
             
-            # Format LLO column to show checkmarks instead of true/false
+            # Format LLO column with GREEN checkmarks
             def format_llo(value):
                 if pd.notna(value):
                     if str(value).lower() in ['true', '1', 'yes']:
-                        return "✓"
+                        return "✅"
                     elif str(value).lower() in ['false', '0', 'no']:
                         return "✗"
                 return ""
