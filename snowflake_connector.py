@@ -73,10 +73,13 @@ def get_product_activity_by_gamechanger_id(account18_id: str) -> pd.DataFrame:
             'WHAT_ARE_NEXT_STEPS__C': 'NEXT_STEPS'
         })
         
-        # Convert all text columns to uppercase
+        # Replace None/NaN/NaT with empty strings first
+        df = df.fillna('')
+        
+        # Convert all text columns to uppercase (but not None values)
         for col in df.select_dtypes(include=['object']).columns:
             if col not in ['START_DATE', 'CLOSED_DATE']:  # Skip date columns
-                df[col] = df[col].astype(str).str.upper()
+                df[col] = df[col].apply(lambda x: str(x).upper() if x != '' and str(x).upper() != 'NONE' else '')
         
         return df
     finally:
@@ -147,9 +150,12 @@ def get_amp_activity_by_customer_id(amp_ampcustomer_id) -> pd.DataFrame:
             '6_MONTHS_AGO': '6 MONTHS AGO'
         })
         
-        # Convert all text columns to uppercase
+        # Replace None/NaN with empty strings first
+        df = df.fillna('')
+        
+        # Convert all text columns to uppercase (but not None values)
         for col in df.select_dtypes(include=['object']).columns:
-            df[col] = df[col].astype(str).str.upper()
+            df[col] = df[col].apply(lambda x: str(x).upper() if x != '' and str(x).upper() != 'NONE' else '')
         
         return df
     finally:
