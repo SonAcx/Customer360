@@ -309,24 +309,37 @@ else:
         where_sql = " AND ".join(where_clauses)
         
         query = f"""
-            SELECT 
-                SF_ACCOUNT18_ID__C AS "Gamechanger ID",
-                AMP_AMPCUSTOMER_ID AS "AMP Customer ID",
-                FF_ID AS "Firefly ID",
-                SF_PRIMARY_EMPLOYEE_NAME__C AS "Primary Employee",
-                NAME AS "Name",
-                ADDRESS AS "Address",
-                CITY AS "City",
-                STATE AS "State",
-                SF_ZIP__C AS "Zip",
-                SF_TF_PRIMARYDISTRIBUTORNAME__C AS "Primary Distributor",
-                SF_LARGELEVERAGEOPERATOR__C AS "LLO",
-                SF_GEOMARKET_NAME__C AS "Market",
-                SF_GEOZONE_NAME__C AS "Zone",
-                DS_ACCOUNT_TYPE AS "Account Type"
-            FROM PROD_DWH.DWH.DIM_ACCOUNT
+            WITH amp_consolidation AS (
+                -- Group all AMP Customer IDs by FF_ID
+                SELECT 
+                    FF_ID,
+                    LISTAGG(DISTINCT AMP_AMPCUSTOMER_ID, ', ') 
+                        WITHIN GROUP (ORDER BY AMP_AMPCUSTOMER_ID) AS CONSOLIDATED_AMP_IDS
+                FROM PROD_DWH.DWH.DIM_ACCOUNT
+                WHERE AMP_AMPCUSTOMER_ID IS NOT NULL
+                  AND FF_ID IS NOT NULL
+                GROUP BY FF_ID
+            )
+            SELECT DISTINCT
+                a.SF_ACCOUNT18_ID__C AS "Gamechanger ID",
+                COALESCE(ac.CONSOLIDATED_AMP_IDS, CAST(a.AMP_AMPCUSTOMER_ID AS VARCHAR)) AS "AMP Customer ID",
+                a.FF_ID AS "Firefly ID",
+                a.SF_PRIMARY_EMPLOYEE_NAME__C AS "Primary Employee",
+                a.NAME AS "Name",
+                a.ADDRESS AS "Address",
+                a.CITY AS "City",
+                a.STATE AS "State",
+                a.SF_ZIP__C AS "Zip",
+                a.SF_TF_PRIMARYDISTRIBUTORNAME__C AS "Primary Distributor",
+                a.SF_LARGELEVERAGEOPERATOR__C AS "LLO",
+                a.SF_GEOMARKET_NAME__C AS "Market",
+                a.SF_GEOZONE_NAME__C AS "Zone",
+                a.DS_ACCOUNT_TYPE AS "Account Type"
+            FROM PROD_DWH.DWH.DIM_ACCOUNT a
+            LEFT JOIN amp_consolidation ac
+                ON a.FF_ID = ac.FF_ID
             WHERE {where_sql}
-            ORDER BY NAME
+            ORDER BY a.NAME
         """
         
         # Get fresh connection and use try/finally
