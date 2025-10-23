@@ -493,7 +493,7 @@ else:
             column_config = {
                 "Gamechanger ID": st.column_config.TextColumn("Gamechanger ID"),
                 "Primary Employee": st.column_config.TextColumn("Primary Employee"),
-                "AMP Customer ID": st.column_config.TextColumn("AMP Cust ID", width=200),
+                "AMP Customer ID": st.column_config.TextColumn("AMP Cust ID", width=180),
                 "Firefly ID": st.column_config.TextColumn("Firefly ID"),
                 "Name": st.column_config.TextColumn("Account Name"),
                 "Address": st.column_config.TextColumn("Address"),
