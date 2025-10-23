@@ -434,25 +434,21 @@ else:
             account_ids = []
             for _, row in page_df.iterrows():
                 sf_id = row['Gamechanger ID'] if pd.notna(row['Gamechanger ID']) and row['Gamechanger ID'] != '' else None
-                amp_id = row['AMP Customer ID']
-                if pd.notna(amp_id) and amp_id != '' and amp_id != 0:
-                    try:
-                        amp_id = int(float(amp_id))
-                    except:
-                        amp_id = None
-                else:
-                    amp_id = None
-                    
+                amp_id = row['AMP Customer ID']  # Keep full string: "1226698, 1794016"
+                
                 account_ids.append({
                     'sf_id': sf_id,
-                    'amp_id': amp_id
+                    'amp_id': amp_id  # Pass the FULL comma-separated string
                 })
             
-           # Get activity status
-            
+            # DEBUG
+            st.write("🔍 DEBUG: First 3 account_ids:")
+            st.write(account_ids[:3])
+
+            # Get activity status
             with st.spinner("Checking activity status..."):
                 activity_status = check_activity_exists(account_ids)
-
+                
             # DEBUG - Check what activity_status contains
             st.write("🔍 DEBUG: Activity Status Sample:")
             st.write(dict(list(activity_status.items())[:5]))  # Show first 5 entries
