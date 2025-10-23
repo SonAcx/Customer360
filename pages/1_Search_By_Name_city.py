@@ -507,7 +507,6 @@ else:
             
             # Apply formatting
             page_df[['Gamechanger ID', 'AMP Customer ID']] = page_df.apply(format_ids_with_indicators, axis=1)
-)
             page_df = page_df.fillna('')
             
             # Create column configuration with proper sizing
