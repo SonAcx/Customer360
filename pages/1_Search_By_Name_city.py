@@ -316,7 +316,7 @@ else:
                 -- Group all AMP Customer IDs by FF_ID
                 SELECT 
                     FF_ID,
-                    LISTAGG(DISTINCT AMP_AMPCUSTOMER_ID, ', ') 
+                    LISTAGG(DISTINCT CAST(AMP_AMPCUSTOMER_ID AS INTEGER), ', ') 
                         WITHIN GROUP (ORDER BY AMP_AMPCUSTOMER_ID) AS CONSOLIDATED_AMP_IDS
                 FROM PROD_DWH.DWH.DIM_ACCOUNT
                 WHERE AMP_AMPCUSTOMER_ID IS NOT NULL
@@ -325,7 +325,7 @@ else:
             )
             SELECT DISTINCT
                 a.SF_ACCOUNT18_ID__C AS "Gamechanger ID",
-                COALESCE(ac.CONSOLIDATED_AMP_IDS, CAST(a.AMP_AMPCUSTOMER_ID AS VARCHAR)) AS "AMP Customer ID",
+                COALESCE(ac.CONSOLIDATED_AMP_IDS, CAST(CAST(a.AMP_AMPCUSTOMER_ID AS INTEGER) AS VARCHAR)) AS "AMP Customer ID",
                 a.FF_ID AS "Firefly ID",
                 a.SF_PRIMARY_EMPLOYEE_NAME__C AS "Primary Employee",
                 a.NAME AS "Name",
