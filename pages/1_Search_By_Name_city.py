@@ -285,14 +285,6 @@ else:
             where_clauses.append("LOWER(NAME) LIKE %s")
             params.append(f"%{search_term.lower()}%")
         
-        if selected_city != 'All':
-            where_clauses.append("CITY = %s")
-            params.append(selected_city)
-        
-        if selected_state != 'All':
-            where_clauses.append("STATE = %s")
-            params.append(selected_state)
-        
         where_sql = " AND ".join(where_clauses)
         
         query = f"""
