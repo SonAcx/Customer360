@@ -464,19 +464,49 @@ else:
                     if status.get('has_sf'):
                         page_df.at[idx, 'Gamechanger ID'] = f"{gc_id} 🟢"
                 
-                # Handle AMP Customer ID
-                if pd.notna(amp_id) and amp_id != '' and amp_id != 0:
-                    try:
-                        amp_id_int = int(float(amp_id))
-                        status = activity_status.get(str(gc_id) if gc_id else str(amp_id_int), {})
-                        if status.get('has_amp'):
-                            page_df.at[idx, 'AMP Customer ID'] = f"{amp_id_int} 🟢"
-                    except:
-                        pass
+                # Add activity indicators (green circles) for each individual ID
+            def format_ids_with_indicators(row):
+                """Format IDs with individual green circles"""
+                gc_id = row['Gamechanger ID']
+                amp_id = row['AMP Customer ID']
+                
+                # Format Gamechanger ID
+                if pd.notna(gc_id) and str(gc_id).strip():
+                    key = str(gc_id)
+                    if key in activity_status and activity_status[key]['has_sf']:
+                        gc_display = f"{gc_id} 🟢"
+                    else:
+                        gc_display = str(gc_id)
+                else:
+                    gc_display = ''
+                
+                # Format AMP Customer ID(s) - check each individual ID
+                if pd.notna(amp_id) and str(amp_id).strip() and str(amp_id) != '0':
+                    amp_str = str(amp_id).strip()
+                    if ',' in amp_str:
+                        # Multiple IDs - check each one
+                        amp_list = [id.strip() for id in amp_str.split(',')]
+                        formatted_ids = []
+                        for single_id in amp_list:
+                            # Check activity for this specific ID
+                            if single_id in activity_status and activity_status[single_id]['has_amp']:
+                                formatted_ids.append(f"{single_id} 🟢")
+                            else:
+                                formatted_ids.append(single_id)
+                        amp_display = ', '.join(formatted_ids)
+                    else:
+                        # Single ID
+                        if amp_str in activity_status and activity_status[amp_str]['has_amp']:
+                            amp_display = f"{amp_str} 🟢"
+                        else:
+                            amp_display = amp_str
+                else:
+                    amp_display = ''
+                
+                return pd.Series([gc_display, amp_display])
             
-            # Convert AMP Customer ID to string and replace None/NaN values with empty strings
-            page_df['AMP Customer ID'] = page_df['AMP Customer ID'].apply(
-    lambda x: '' if pd.isna(x) or x == 0 or x == '' else str(x) if isinstance(x, str) else str(int(float(x)))
+            # Apply formatting
+            page_df[['Gamechanger ID', 'AMP Customer ID']] = page_df.apply(format_ids_with_indicators, axis=1)
 )
             page_df = page_df.fillna('')
             
