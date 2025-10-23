@@ -249,6 +249,9 @@ if st.session_state.page == 'activity':
                 if isinstance(amp_customer_id, str):
                     # Remove green circle emoji if present
                     clean_amp_id = amp_customer_id.replace(' 🟢', '').strip()
+                    # Handle comma-separated IDs - use the first one
+                    if ',' in clean_amp_id:
+                        clean_amp_id = clean_amp_id.split(',')[0].strip()
                     amp_id_value = int(float(clean_amp_id)) if clean_amp_id else None
                 else:
                     amp_id_value = int(float(amp_customer_id)) if amp_customer_id != 0 else None
