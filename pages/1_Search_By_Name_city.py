@@ -184,16 +184,16 @@ if st.session_state.page == 'activity':
         
         st.markdown(account_details_html, unsafe_allow_html=True)
         
-        st.markdown("---")
-        
-        # Get Salesforce product activity
-        gamechanger_id = account.get('Gamechanger ID')
-        amp_customer_id = account.get('AMP Customer ID')
-
         # Salesforce Activity Section
+       
         st.markdown("## 📊 Salesforce Product Activity")
+        
+        # Get the Gamechanger ID
+        gamechanger_id = account.get('Gamechanger ID')
+        
+        # Remove green circle emoji from Gamechanger ID if present
         if gamechanger_id and pd.notna(gamechanger_id) and gamechanger_id != '':
-            # Remove green circle emoji from ID
+            # Remove green circle emoji if present
             gamechanger_id_clean = str(gamechanger_id).replace(' 🟢', '').strip()
             
             with st.spinner("Loading Salesforce product activity..."):
@@ -202,13 +202,8 @@ if st.session_state.page == 'activity':
                 importlib.reload(snowflake_connector)
                 sf_activity_df = snowflake_connector.get_product_activity_by_gamechanger_id(gamechanger_id_clean)
             
-            if sf_activity_df.empty:
-                st.info("No Salesforce product activity found for this account.")
-            else:
+            if not sf_activity_df.empty:
                 st.success(f"Found {len(sf_activity_df)} Salesforce product activity records")
-                
-                # Replace None/NaN with empty strings
-                sf_activity_df = sf_activity_df.fillna('')
                 
                 # Replace None/NaN with empty strings
                 sf_activity_df = sf_activity_df.fillna('')
@@ -217,10 +212,11 @@ if st.session_state.page == 'activity':
                 st.dataframe(
                     sf_activity_df,
                     use_container_width=False,
+                    height=400,
                     hide_index=True,
                     column_config={
                         "START_DATE": st.column_config.DatetimeColumn("START_DATE", format="YYYY-MM-DD"),
-                        "CLOSED_DATE": st.column_config.DateColumn("CLOSED_DATE", format="YYYY-MM-DD"),
+                        "CLOSED_DATE": st.column_config.DatetimeColumn("CLOSED_DATE", format="YYYY-MM-DD"),
                         "ACTIVITY_STATUS": st.column_config.TextColumn("ACTIVITY_STATUS"),
                         "PRODUCT_NAME": st.column_config.TextColumn("PRODUCT_NAME"),
                         "PRODUCT_SKU": st.column_config.TextColumn("PRODUCT_SKU"),
@@ -233,7 +229,8 @@ if st.session_state.page == 'activity':
                         "NEXT_STEPS": st.column_config.TextColumn("NEXT_STEPS")
                     }
                 )
-                
+            else:
+                st.info("No Salesforce product activity found for this account.")
         else:
             st.info("No Gamechanger ID available to fetch Salesforce activity.")
         
@@ -275,6 +272,7 @@ else:
     st.markdown("<h1 style='text-align:center; color:#003366; font-size:56px; font-weight:bold;'>CUSTOMER 360</h1>", unsafe_allow_html=True)
     # --- FILTERS ROW ---
     st.markdown("<h3 style='color:black;'>🔍 Search Filters</h3>", unsafe_allow_html=True)
+    
     col1, col2, col3 = st.columns([2, 1, 1])
     
     with col1:
@@ -290,7 +288,6 @@ else:
     with col3:
         states = ['All'] + sorted(filter_options['STATE'].unique().tolist())
         selected_state = st.selectbox("State", states, key="filter_state")
-
     # --- MAIN LOGIC ---
     if len(search_term.strip()) >= 2 or selected_city != 'All' or selected_state != 'All':
         # Build dynamic query
@@ -351,7 +348,6 @@ else:
             df = pd.read_sql(query, conn, params=tuple(params))
         finally:
             conn.close()
-
         if df.empty:
             st.warning("No matches found.")
             st.session_state.current_page = 0
@@ -363,20 +359,23 @@ else:
             # Priority 4: Everything else
             
             def get_priority(row):
-                has_gamechanger = pd.notna(row['Gamechanger ID']) and row['Gamechanger ID'] != ''
-                has_amp = pd.notna(row['AMP Customer ID']) and row['AMP Customer ID'] != '' and row['AMP Customer ID'] != 0
-                has_firefly = pd.notna(row['Firefly ID']) and row['Firefly ID'] != ''
+                gc_id = row['Gamechanger ID']
+                amp_id = row['AMP Customer ID']
+                ff_id = row['Firefly ID']
                 
-                if has_gamechanger and has_amp and has_firefly:
-                    return 1  # Priority 1: All 3 IDs
-                elif has_gamechanger and has_amp:
-                    return 2  # Priority 2: Gamechanger + AMP
-                elif has_gamechanger:
-                    return 3  # Priority 3: Only Gamechanger
+                has_gc = pd.notna(gc_id) and str(gc_id).strip() != ''
+                has_amp = pd.notna(amp_id) and str(amp_id).strip() != '' and str(amp_id) != '0'
+                has_ff = pd.notna(ff_id) and str(ff_id).strip() != ''
+                
+                if has_gc and has_amp and has_ff:
+                    return 1  # All three
+                elif has_gc and has_amp:
+                    return 2  # GC + AMP
+                elif has_gc:
+                    return 3  # Only GC
                 else:
-                    return 4  # Priority 4: Everything else
+                    return 4  # Everything else
             
-            # Create sort key by combining the 3 IDs
             def get_id_sort_key(row):
                 """Create a sort key based on which IDs exist"""
                 gc_id = row['Gamechanger ID']
@@ -441,19 +440,11 @@ else:
                     'amp_id': amp_id  # Pass the FULL comma-separated string
                 })
             
-            # DEBUG
-            st.write("🔍 DEBUG: First 3 account_ids:")
-            st.write(account_ids[:3])
-
             # Get activity status
             with st.spinner("Checking activity status..."):
                 activity_status = check_activity_exists(account_ids)
-                
-            # DEBUG - Check what activity_status contains
-            st.write("🔍 DEBUG: Activity Status Sample:")
-            st.write(dict(list(activity_status.items())[:5]))  # Show first 5 entries
             
-                # Add activity indicators (green circles) for each individual ID
+            # Add activity indicators (green circles) for each individual ID
             def format_ids_with_indicators(row):
                 """Format IDs with individual green circles"""
                 gc_id = row['Gamechanger ID']
