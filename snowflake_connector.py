@@ -81,6 +81,16 @@ def get_amp_activity_by_customer_id(amp_ampcustomer_id) -> pd.DataFrame:
     conn = get_snowflake_connection()
     
     query = """
+        WITH related_accounts AS (
+            -- Get the FF_ID for the input customer
+            SELECT DISTINCT a2.AMP_AMPCUSTOMER_ID
+            FROM PROD_DWH.DWH.DIM_ACCOUNT a1
+            JOIN PROD_DWH.DWH.DIM_ACCOUNT a2 
+                ON a1.FF_ID = a2.FF_ID
+            WHERE a1.AMP_AMPCUSTOMER_ID = %s
+              AND a2.AMP_AMPCUSTOMER_ID IS NOT NULL
+              AND a1.FF_ID IS NOT NULL
+        )
         SELECT 
             amp.AMPCUSTOMER_ID,
             cust.AMP_DATA_SOURCE AS "GPO",
@@ -109,7 +119,7 @@ def get_amp_activity_by_customer_id(amp_ampcustomer_id) -> pd.DataFrame:
             ON amp.CCODE = mfr.AMP_CLIENTS_CCODE
         LEFT JOIN PROD_DWH.DWH.DIM_PRODUCT prod
             ON amp.PRODUCT_UUID = prod.PRODUCT_UUID
-        WHERE amp.AMPCUSTOMER_ID = %s
+        WHERE amp.AMPCUSTOMER_ID IN (SELECT AMP_AMPCUSTOMER_ID FROM related_accounts)
           AND (amp.YTD IS NOT NULL 
                OR amp.LYM IS NOT NULL 
                OR amp.LYTD IS NOT NULL
