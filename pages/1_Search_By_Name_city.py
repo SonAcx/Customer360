@@ -452,18 +452,11 @@ else:
             
             with st.spinner("Checking activity status..."):
                 activity_status = check_activity_exists(account_ids)
+
+            # DEBUG - Check what activity_status contains
+            st.write("🔍 DEBUG: Activity Status Sample:")
+            st.write(dict(list(activity_status.items())[:5]))  # Show first 5 entries
             
-            # Add green circle indicators to IDs that have activity
-            for idx, row in page_df.iterrows():
-                gc_id = row['Gamechanger ID']
-                amp_id = row['AMP Customer ID']
-                
-                # Handle Gamechanger ID
-                if pd.notna(gc_id) and gc_id != '':
-                    status = activity_status.get(str(gc_id), {})
-                    if status.get('has_sf'):
-                        page_df.at[idx, 'Gamechanger ID'] = f"{gc_id} 🟢"
-                
                 # Add activity indicators (green circles) for each individual ID
             def format_ids_with_indicators(row):
                 """Format IDs with individual green circles"""
