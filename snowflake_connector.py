@@ -73,6 +73,11 @@ def get_product_activity_by_gamechanger_id(account18_id: str) -> pd.DataFrame:
             'WHAT_ARE_NEXT_STEPS__C': 'NEXT_STEPS'
         })
         
+        # Convert all text columns to uppercase
+        for col in df.select_dtypes(include=['object']).columns:
+            if col not in ['START_DATE', 'CLOSED_DATE']:  # Skip date columns
+                df[col] = df[col].astype(str).str.upper()
+        
         return df
     finally:
         conn.close()
@@ -93,7 +98,7 @@ def get_amp_activity_by_customer_id(amp_ampcustomer_id) -> pd.DataFrame:
         )
         SELECT 
             amp.AMPCUSTOMER_ID,
-            cust.AMP_DATA_SOURCE AS "GPO",
+            cust.AMP_DATA_SOURCE AS "DATA_SOURCE",
             mfr.AMP_CLIENTS_CLIENT AS "CLIENT_NAME",
             amp.DISTRIBUTOR,
             amp.ITEM_ID,
@@ -141,6 +146,10 @@ def get_amp_activity_by_customer_id(amp_ampcustomer_id) -> pd.DataFrame:
             '5_MONTHS_AGO': '5 MONTHS AGO',
             '6_MONTHS_AGO': '6 MONTHS AGO'
         })
+        
+        # Convert all text columns to uppercase
+        for col in df.select_dtypes(include=['object']).columns:
+            df[col] = df[col].astype(str).str.upper()
         
         return df
     finally:
