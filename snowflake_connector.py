@@ -172,17 +172,32 @@ def check_activity_exists(account_ids: list) -> dict:
         else:
             sf_with_activity = set()
         
-        # Check for AMP activity
+        # Check for AMP activity using FF_ID consolidation
         amp_ids = [aid['amp_id'] for aid in account_ids if aid.get('amp_id')]
         if amp_ids:
             placeholders = ','.join(['%s'] * len(amp_ids))
             amp_query = f"""
-                SELECT DISTINCT AMPCUSTOMER_ID
-                FROM PROD_DWH.DWH.FACT_AMP_PURCHASE_DATA
-                WHERE AMPCUSTOMER_ID IN ({placeholders})
+                WITH related_accounts AS (
+                    -- Find all AMP IDs that share the same FF_ID as the input IDs
+                    SELECT DISTINCT a2.AMP_AMPCUSTOMER_ID, a1.AMP_AMPCUSTOMER_ID as ORIGINAL_ID
+                    FROM PROD_DWH.DWH.DIM_ACCOUNT a1
+                    JOIN PROD_DWH.DWH.DIM_ACCOUNT a2 
+                        ON a1.FF_ID = a2.FF_ID
+                    WHERE a1.AMP_AMPCUSTOMER_ID IN ({placeholders})
+                      AND a2.AMP_AMPCUSTOMER_ID IS NOT NULL
+                      AND a1.FF_ID IS NOT NULL
+                )
+                SELECT DISTINCT 
+                    ra.ORIGINAL_ID,
+                    COUNT(DISTINCT amp.PURCHASE_UUID) as activity_count
+                FROM related_accounts ra
+                JOIN PROD_DWH.DWH.FACT_AMP_PURCHASE_DATA amp
+                    ON ra.AMP_AMPCUSTOMER_ID = amp.AMPCUSTOMER_ID
+                GROUP BY ra.ORIGINAL_ID
+                HAVING COUNT(DISTINCT amp.PURCHASE_UUID) > 0
             """
             amp_df = pd.read_sql(amp_query, conn, params=tuple(amp_ids))
-            amp_with_activity = set(amp_df['AMPCUSTOMER_ID'].tolist())
+            amp_with_activity = set(amp_df['ORIGINAL_ID'].tolist())
         else:
             amp_with_activity = set()
         
