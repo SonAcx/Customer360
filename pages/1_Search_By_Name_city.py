@@ -272,21 +272,9 @@ else:
     # --- FILTERS ROW ---
     st.markdown("<h3 style='color:black;'>🔍 Search Filters</h3>", unsafe_allow_html=True)
     
-    col1, col2, col3 = st.columns([2, 1, 1])
-    
-    with col1:
-        search_term = st.text_input("Account Name", placeholder="e.g. mazatlan", key="search_name")
-    
-    # Get filter options
-    filter_options = get_filter_options()
-    
-    with col2:
-        cities = ['All'] + sorted(filter_options['CITY'].unique().tolist())
-        selected_city = st.selectbox("City", cities, key="filter_city")
-    
-    with col3:
-        states = ['All'] + sorted(filter_options['STATE'].unique().tolist())
-        selected_state = st.selectbox("State", states, key="filter_state")
+    # Search filter
+    search_term = st.text_input("🔍 Search by Account Name", placeholder="Enter account name (minimum 2 characters)...")
+
     # --- MAIN LOGIC ---
     if len(search_term.strip()) >= 2 or selected_city != 'All' or selected_state != 'All':
         # Build dynamic query
