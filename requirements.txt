@@ -2,3 +2,13 @@ streamlit
 pandas 
 snowflake-connector-python 
 cryptography
+plotly
+```
+
+If you don't have a `requirements.txt` file, create one in your project root directory with:
+```
+streamlit
+pandas
+snowflake-connector-python
+cryptography
+plotly
