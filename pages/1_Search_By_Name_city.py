@@ -375,14 +375,31 @@ else:
             
             # Create sort key by combining the 3 IDs
             def get_id_sort_key(row):
-                gc_id = str(row['Gamechanger ID']) if pd.notna(row['Gamechanger ID']) else ''
-                # Handle AMP ID as float, convert to int then string
-                if pd.notna(row['AMP Customer ID']) and row['AMP Customer ID'] != 0:
-                    amp_id = str(int(float(row['AMP Customer ID'])))
+                """Create a sort key based on which IDs exist"""
+                gc_id = row['Gamechanger ID']
+                amp_id = row['AMP Customer ID']
+                ff_id = row['Firefly ID']
+                
+                has_gc = pd.notna(gc_id) and str(gc_id).strip() != ''
+                has_ff = pd.notna(ff_id) and str(ff_id).strip() != ''
+                
+                # Handle multiple AMP IDs (comma-separated)
+                has_amp = False
+                if pd.notna(amp_id) and str(amp_id).strip() != '':
+                    # Check if it's a valid number or comma-separated list
+                    amp_str = str(amp_id).strip()
+                    if amp_str and amp_str != '0':
+                        has_amp = True
+                
+                # Priority sorting
+                if has_gc and has_amp and has_ff:
+                    return 1  # All three IDs
+                elif has_gc and has_amp:
+                    return 2  # GC + AMP (no FF)
+                elif has_gc:
+                    return 3  # Only GC
                 else:
-                    amp_id = ''
-                ff_id = str(row['Firefly ID']) if pd.notna(row['Firefly ID']) else ''
-                return f"{gc_id}_{amp_id}_{ff_id}"
+                    return 4  # Everything else
             
             df['_priority'] = df.apply(get_priority, axis=1)
             df['_id_sort_key'] = df.apply(get_id_sort_key, axis=1)
