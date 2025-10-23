@@ -383,7 +383,7 @@ else:
     height=500,
     color_discrete_sequence=['#003366']  # Acxion blue
 )
-                fig.update_traces(marker=dict(size=12, color='#003366'))
+                fig.update_traces(marker=dict(size=16, color='#003366'))
                 
                 fig.update_layout(
                     mapbox_style="open-street-map",
