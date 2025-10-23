@@ -1,0 +1,555 @@
+import streamlit as st
+import pandas as pd
+import sys, os
+
+# --- IMPORTS ---
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from snowflake_connector import get_snowflake_connection, check_activity_exists, load_activities_parallel
+
+# --- PAGE CONFIGURATION ---
+st.set_page_config(page_title="Customer 360", layout="wide")
+
+# --- INITIALIZE SESSION STATE ---
+if 'page' not in st.session_state:
+    st.session_state.page = 'search'
+if 'selected_account' not in st.session_state:
+    st.session_state.selected_account = None
+if 'current_page' not in st.session_state:
+    st.session_state.current_page = 0
+
+# --- CUSTOM CSS ---
+st.markdown("""
+    <style>
+    /* SIDEBAR */
+    section[data-testid="stSidebar"] {
+        background-color: #003366 !important;
+    }
+    section[data-testid="stSidebar"] * {
+        color: white !important;
+        font-weight: 500 !important;
+    }
+    
+    /* PAGINATION */
+    .pagination {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 16px;
+        font-weight: bold;
+    }
+    
+    /* DATAFRAME HEADER STYLING - Acxion Colors */
+    [data-testid="stDataFrame"] [data-testid="stDataFrameResizableContainer"] > div:first-child {
+        background-color: #003366 !important;
+    }
+    
+    [data-testid="stDataFrame"] thead th {
+        background-color: #003366 !important;
+        color: white !important;
+        font-weight: bold !important;
+        font-size: 14px !important;
+        padding: 12px 8px !important;
+        border-right: 1px solid #00a3e0 !important;
+    }
+    
+    /* Column headers */
+    [data-testid="stDataFrame"] [data-testid="column-header"] {
+        background-color: #003366 !important;
+        color: white !important;
+        font-weight: bold !important;
+    }
+    
+    /* Zebra striping */
+    [data-testid="stDataFrame"] tbody tr:nth-child(even) {
+        background-color: #f8f9fa !important;
+    }
+    
+    /* Row hover effect */
+    [data-testid="stDataFrame"] tbody tr:hover {
+        background-color: #e6f0ff !important;
+        cursor: pointer;
+    }
+    
+    /* Info box styling */
+    [data-testid="stAlert"] {
+        background-color: #e6f0ff !important;
+        border-left: 4px solid #003366 !important;
+    }
+    
+    /* SALESFORCE PRODUCT ACTIVITY TABLE STYLING */
+    [data-testid="stDataFrame"] {
+        border: 2px solid #003366 !important;
+    }
+    
+    /* Darker table lines */
+    [data-testid="stDataFrame"] td {
+        border: 1px solid #003366 !important;
+    }
+    
+    [data-testid="stDataFrame"] th {
+        border: 1px solid #003366 !important;
+        text-align: center !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        padding: 8px !important;
+        min-width: 100px !important;
+    }
+    
+    /* Center all header text */
+    [data-testid="stDataFrame"] [data-testid="column-header"] {
+        text-align: center !important;
+        justify-content: center !important;
+    }
+    
+    /* Darker row borders */
+    [data-testid="stDataFrame"] tbody tr {
+        border-bottom: 1px solid #003366 !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# --- SIDEBAR ---
+st.sidebar.image("assets/acxionlogo2.png", use_container_width=True)
+st.sidebar.markdown(
+    "<h3 style='text-align:center; color:white; font-weight:bold;'>Powered by Acxion</h3>",
+    unsafe_allow_html=True
+)
+
+# --- FUNCTION TO GET CITY/STATE OPTIONS ---
+@st.cache_data(ttl=3600)
+def get_filter_options():
+    conn = get_snowflake_connection()
+    query = """
+        SELECT DISTINCT CITY, STATE
+        FROM PROD_DWH.DWH.DIM_ACCOUNT
+        WHERE (FF_ID IS NOT NULL 
+               OR SF_ACCOUNT18_ID__C IS NOT NULL 
+               OR AMP_SOURCE_CUSTOMER_ID IS NOT NULL)
+          AND CITY IS NOT NULL 
+          AND STATE IS NOT NULL
+        ORDER BY STATE, CITY
+    """
+    df = pd.read_sql(query, conn)
+    conn.close()
+    return df
+
+# --- NAVIGATION LOGIC ---
+if st.session_state.page == 'activity':
+    # Show Activity Page with account name in title
+    account = st.session_state.selected_account
+    account_name = account.get('Name', 'N/A') if account else 'N/A'
+    
+    st.markdown(f"<h1 style='text-align:center; color:#003366;'>PRODUCT ACTIVITY - {account_name}</h1>", unsafe_allow_html=True)
+    
+    if st.button("← Back to Search"):
+        st.session_state.page = 'search'
+        st.rerun()
+    
+    if account:
+        st.markdown("---")
+        
+        # Display all account details in a two-column card layout with blue border box
+        st.markdown("#### 📋 Account Details")
+        
+        # Helper function to display field or empty if None
+        def get_display_value(value):
+            if pd.notna(value) and value != '' and value != 0:
+                return str(value)
+            return ''
+        
+        # Create the account details content
+        account_details_html = f"""
+        <div style="border: 2px solid #003366; border-radius: 8px; padding: 15px; background-color: white; margin-bottom: 20px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0px 40px;">
+                <div>
+                    <p style="margin: 2px 0; line-height: 1.3;"><strong>Account Name:</strong> {get_display_value(account.get('Name'))}</p>
+                    <p style="margin: 2px 0; line-height: 1.3;"><strong>Gamechanger ID:</strong> {get_display_value(account.get('Gamechanger ID'))}</p>
+                    <p style="margin: 2px 0; line-height: 1.3;"><strong>AMP Customer ID:</strong> {get_display_value(account.get('AMP Customer ID'))}</p>
+                    <p style="margin: 2px 0; line-height: 1.3;"><strong>Firefly ID:</strong> {get_display_value(account.get('Firefly ID'))}</p>
+                    <p style="margin: 2px 0; line-height: 1.3;"><strong>Address:</strong> {get_display_value(account.get('Address'))}</p>
+                    <p style="margin: 2px 0; line-height: 1.3;"><strong>City:</strong> {get_display_value(account.get('City'))}</p>
+                    <p style="margin: 2px 0; line-height: 1.3;"><strong>State:</strong> {get_display_value(account.get('State'))}</p>
+                    <p style="margin: 2px 0; line-height: 1.3;"><strong>Zip:</strong> {get_display_value(account.get('Zip'))}</p>
+                </div>
+                <div>
+                    <p style="margin: 2px 0; line-height: 1.3;"><strong>Type:</strong> {get_display_value(account.get('Account Type'))}</p>
+                    <p style="margin: 2px 0; line-height: 1.3;"><strong>Primary Employee:</strong> {get_display_value(account.get('Primary Employee'))}</p>
+                    <p style="margin: 2px 0; line-height: 1.3;"><strong>Primary Distributor:</strong> {get_display_value(account.get('Primary Distributor'))}</p>
+                    <p style="margin: 2px 0; line-height: 1.3;"><strong>LLO:</strong> {get_display_value(account.get('LLO'))}</p>
+                    <p style="margin: 2px 0; line-height: 1.3;"><strong>Market:</strong> {get_display_value(account.get('Market'))}</p>
+                    <p style="margin: 2px 0; line-height: 1.3;"><strong>Zone:</strong> {get_display_value(account.get('Zone'))}</p>
+                </div>
+            </div>
+        </div>
+        """
+        
+        st.markdown(account_details_html, unsafe_allow_html=True)
+        
+        # PARALLEL LOADING - Load both activities at the same time!
+        gamechanger_id = account.get('Gamechanger ID')
+        amp_customer_id = account.get('AMP Customer ID')
+        
+        with st.spinner("Loading product activity data..."):
+            sf_activity_df, amp_activity_df = load_activities_parallel(gamechanger_id, amp_customer_id)
+        
+        # Salesforce Activity Section
+        st.markdown("## 📊 Salesforce Product Activity")
+        
+        if not sf_activity_df.empty:
+            st.success(f"Found {len(sf_activity_df)} Salesforce product activity records")
+            
+            # Replace None/NaN with empty strings
+            sf_activity_df = sf_activity_df.fillna('')
+            
+            # Replace 'None' string with empty string for CLOSED_DATE
+            sf_activity_df['CLOSED_DATE'] = sf_activity_df['CLOSED_DATE'].replace('None', '')
+            
+            # Dynamic height based on rows (no empty rows)
+            table_height = min(len(sf_activity_df) * 35 + 38, 400)
+            
+            # Display the dataframe with horizontal scroll
+            st.dataframe(
+                sf_activity_df,
+                use_container_width=False,
+                height=table_height,
+                hide_index=True,
+                column_config={
+                    "START_DATE": st.column_config.DatetimeColumn("START_DATE", format="YYYY-MM-DD"),
+                    "CLOSED_DATE": st.column_config.DatetimeColumn("CLOSED_DATE", format="YYYY-MM-DD"),
+                    "ACTIVITY_STATUS": st.column_config.TextColumn("ACTIVITY_STATUS"),
+                    "PRODUCT_NAME": st.column_config.TextColumn("PRODUCT_NAME"),
+                    "PRODUCT_SKU": st.column_config.TextColumn("PRODUCT_SKU"),
+                    "PRODUCT_PACK": st.column_config.TextColumn("PRODUCT_PACK"),
+                    "CLIENT_NAME": st.column_config.TextColumn("CLIENT_NAME"),
+                    "PRODUCT_CATEGORY": st.column_config.TextColumn("PRODUCT_CATEGORY"),
+                    "PIPELINE_ACTIVITY": st.column_config.TextColumn("PIPELINE_ACTIVITY"),
+                    "PRODUCT_STATUS": st.column_config.TextColumn("PRODUCT_STATUS"),
+                    "QUANTITY_SOLD": st.column_config.TextColumn("QUANTITY_SOLD"),
+                    "NEXT_STEPS": st.column_config.TextColumn("NEXT_STEPS")
+                }
+            )
+        else:
+            if gamechanger_id and pd.notna(gamechanger_id) and gamechanger_id != '':
+                st.info("No Salesforce product activity found for this account.")
+            else:
+                st.info("No Gamechanger ID available to fetch Salesforce activity.")
+        
+        st.markdown("---")
+        
+        # AMP Activity Section
+        st.markdown("## 🛒 AMP Activity")
+        
+        if not amp_activity_df.empty:
+            st.success(f"Found {len(amp_activity_df)} AMP activity records")
+            
+            # Replace None/NaN with empty strings
+            amp_activity_df = amp_activity_df.fillna('')
+            
+            # Dynamic height based on rows (no empty rows)
+            table_height = min(len(amp_activity_df) * 35 + 38, 400)
+            
+            st.dataframe(amp_activity_df, use_container_width=False, height=table_height, hide_index=True)
+        else:
+            if amp_customer_id and pd.notna(amp_customer_id) and amp_customer_id != '' and amp_customer_id != 0:
+                st.info("No AMP activity found for this account.")
+            else:
+                st.info("No AMP Customer ID available to fetch AMP activity.")
+                
+else:
+    # --- MAIN SEARCH PAGE ---
+    st.markdown("<h1 style='text-align:center; color:#003366; font-size:56px; font-weight:bold;'>CUSTOMER 360</h1>", unsafe_allow_html=True)
+    # --- FILTERS ROW ---
+    st.markdown("<h3 style='color:black;'>🔍 Search Filters</h3>", unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns([2, 1, 1])
+    
+    with col1:
+        search_term = st.text_input("Account Name", placeholder="e.g. mazatlan", key="search_name")
+    
+    # Get filter options
+    filter_options = get_filter_options()
+    
+    with col2:
+        cities = ['All'] + sorted(filter_options['CITY'].unique().tolist())
+        selected_city = st.selectbox("City", cities, key="filter_city")
+    
+    with col3:
+        states = ['All'] + sorted(filter_options['STATE'].unique().tolist())
+        selected_state = st.selectbox("State", states, key="filter_state")
+    # --- MAIN LOGIC ---
+    if len(search_term.strip()) >= 2 or selected_city != 'All' or selected_state != 'All':
+        # Build dynamic query
+        where_clauses = []
+        params = []
+        
+        if len(search_term.strip()) >= 2:
+            where_clauses.append("LOWER(NAME) LIKE %s")
+            params.append(f"%{search_term.lower()}%")
+        
+        if selected_city != 'All':
+            where_clauses.append("CITY = %s")
+            params.append(selected_city)
+        
+        if selected_state != 'All':
+            where_clauses.append("STATE = %s")
+            params.append(selected_state)
+        
+        where_sql = " AND ".join(where_clauses)
+        
+        query = f"""
+            WITH amp_consolidation AS (
+                -- Group all AMP Customer IDs by FF_ID
+                SELECT 
+                    FF_ID,
+                    LISTAGG(DISTINCT CAST(AMP_AMPCUSTOMER_ID AS INTEGER), ', ') 
+                        WITHIN GROUP (ORDER BY CAST(AMP_AMPCUSTOMER_ID AS INTEGER)) AS CONSOLIDATED_AMP_IDS
+                FROM PROD_DWH.DWH.DIM_ACCOUNT
+                WHERE AMP_AMPCUSTOMER_ID IS NOT NULL
+                  AND FF_ID IS NOT NULL
+                GROUP BY FF_ID
+            )
+            SELECT DISTINCT
+                a.SF_ACCOUNT18_ID__C AS "Gamechanger ID",
+                COALESCE(ac.CONSOLIDATED_AMP_IDS, CAST(CAST(a.AMP_AMPCUSTOMER_ID AS INTEGER) AS VARCHAR)) AS "AMP Customer ID",
+                a.FF_ID AS "Firefly ID",
+                a.SF_PRIMARY_EMPLOYEE_NAME__C AS "Primary Employee",
+                a.NAME AS "Name",
+                a.ADDRESS AS "Address",
+                a.CITY AS "City",
+                a.STATE AS "State",
+                a.SF_ZIP__C AS "Zip",
+                a.SF_TF_PRIMARYDISTRIBUTORNAME__C AS "Primary Distributor",
+                a.SF_LARGELEVERAGEOPERATOR__C AS "LLO",
+                a.SF_GEOMARKET_NAME__C AS "Market",
+                a.SF_GEOZONE_NAME__C AS "Zone",
+                a.DS_ACCOUNT_TYPE AS "Account Type"
+            FROM PROD_DWH.DWH.DIM_ACCOUNT a
+            LEFT JOIN amp_consolidation ac
+                ON a.FF_ID = ac.FF_ID
+            WHERE {where_sql}
+            ORDER BY a.NAME
+        """
+        
+        # Get fresh connection and use try/finally
+        conn = get_snowflake_connection()
+        try:
+            df = pd.read_sql(query, conn, params=tuple(params))
+        finally:
+            conn.close()
+        if df.empty:
+            st.warning("No matches found.")
+            st.session_state.current_page = 0
+        else:
+            # Create priority column for sorting
+            # Priority 1: Has all 3 IDs (Gamechanger + AMP Customer + Firefly)
+            # Priority 2: Has Gamechanger + AMP Customer (no Firefly)
+            # Priority 3: Has only Gamechanger
+            # Priority 4: Everything else
+            
+            def get_priority(row):
+                gc_id = row['Gamechanger ID']
+                amp_id = row['AMP Customer ID']
+                ff_id = row['Firefly ID']
+                
+                has_gc = pd.notna(gc_id) and str(gc_id).strip() != ''
+                has_amp = pd.notna(amp_id) and str(amp_id).strip() != '' and str(amp_id) != '0'
+                has_ff = pd.notna(ff_id) and str(ff_id).strip() != ''
+                
+                if has_gc and has_amp and has_ff:
+                    return 1  # All three
+                elif has_gc and has_amp:
+                    return 2  # GC + AMP
+                elif has_gc:
+                    return 3  # Only GC
+                else:
+                    return 4  # Everything else
+            
+            def get_id_sort_key(row):
+                """Create a sort key based on which IDs exist"""
+                gc_id = row['Gamechanger ID']
+                amp_id = row['AMP Customer ID']
+                ff_id = row['Firefly ID']
+                
+                has_gc = pd.notna(gc_id) and str(gc_id).strip() != ''
+                has_ff = pd.notna(ff_id) and str(ff_id).strip() != ''
+                
+                # Handle multiple AMP IDs (comma-separated)
+                has_amp = False
+                if pd.notna(amp_id) and str(amp_id).strip() != '':
+                    # Check if it's a valid number or comma-separated list
+                    amp_str = str(amp_id).strip()
+                    if amp_str and amp_str != '0':
+                        has_amp = True
+                
+                # Priority sorting
+                if has_gc and has_amp and has_ff:
+                    return 1  # All three IDs
+                elif has_gc and has_amp:
+                    return 2  # GC + AMP (no FF)
+                elif has_gc:
+                    return 3  # Only GC
+                else:
+                    return 4  # Everything else
+            
+            df['_priority'] = df.apply(get_priority, axis=1)
+            df['_id_sort_key'] = df.apply(get_id_sort_key, axis=1)
+            df = df.sort_values(by=['_priority', '_id_sort_key'])
+            df = df.drop(columns=['_priority', '_id_sort_key'])
+            
+            # Pagination logic
+            total_results = len(df)
+            results_per_page = 50
+            total_pages = (total_results - 1) // results_per_page + 1
+            
+            # Ensure current page is valid
+            if st.session_state.current_page >= total_pages:
+                st.session_state.current_page = 0
+            
+            start_idx = st.session_state.current_page * results_per_page
+            end_idx = min(start_idx + results_per_page, total_results)
+            
+            st.success(f"Showing results {start_idx + 1}-{end_idx} of {total_results} total matches")
+
+            # --- INTERACTIVE DATAFRAME WITH ROW SELECTION ---
+            st.markdown("### 📋 Results")
+            st.markdown("💡 **How to view activity:** Click the checkbox in any row to view details")
+            st.markdown("🟢 **Green circles** indicate IDs with existing product activity")
+            
+            page_df = df.iloc[start_idx:end_idx].reset_index(drop=True)
+            
+            # Check which accounts on this page have activity
+            account_ids = []
+            for _, row in page_df.iterrows():
+                sf_id = row['Gamechanger ID'] if pd.notna(row['Gamechanger ID']) and row['Gamechanger ID'] != '' else None
+                amp_id = row['AMP Customer ID']  # Keep full string: "1226698, 1794016"
+                
+                account_ids.append({
+                    'sf_id': sf_id,
+                    'amp_id': amp_id  # Pass the FULL comma-separated string
+                })
+            
+            # Get activity status
+            with st.spinner("Checking activity status..."):
+                activity_status = check_activity_exists(account_ids)
+            
+            # Add activity indicators (green circles) for each individual ID
+            def format_ids_with_indicators(row):
+                """Format IDs with individual green circles"""
+                gc_id = row['Gamechanger ID']
+                amp_id = row['AMP Customer ID']
+                
+                # Format Gamechanger ID
+                if pd.notna(gc_id) and str(gc_id).strip():
+                    key = str(gc_id)
+                    if key in activity_status and activity_status[key]['has_sf']:
+                        gc_display = f"{gc_id} 🟢"
+                    else:
+                        gc_display = str(gc_id)
+                else:
+                    gc_display = ''
+                
+                # Format AMP Customer ID(s) - check each individual ID
+                if pd.notna(amp_id) and str(amp_id).strip() and str(amp_id) != '0':
+                    amp_str = str(amp_id).strip()
+                    if ',' in amp_str:
+                        # Multiple IDs - check each one
+                        amp_list = [id.strip() for id in amp_str.split(',')]
+                        formatted_ids = []
+                        for single_id in amp_list:
+                            # Check activity for this specific ID
+                            if single_id in activity_status and activity_status[single_id]['has_amp']:
+                                formatted_ids.append(f"{single_id} 🟢")
+                            else:
+                                formatted_ids.append(single_id)
+                        amp_display = ', '.join(formatted_ids)
+                    else:
+                        # Single ID
+                        if amp_str in activity_status and activity_status[amp_str]['has_amp']:
+                            amp_display = f"{amp_str} 🟢"
+                        else:
+                            amp_display = amp_str
+                else:
+                    amp_display = ''
+                
+                return pd.Series([gc_display, amp_display])
+            
+            # Format LLO column to show checkmarks instead of true/false
+            def format_llo(value):
+                if pd.notna(value):
+                    if str(value).lower() in ['true', '1', 'yes']:
+                        return "✓"
+                    elif str(value).lower() in ['false', '0', 'no']:
+                        return "✗"
+                return ""
+            
+            # Apply formatting
+            page_df[['Gamechanger ID', 'AMP Customer ID']] = page_df.apply(format_ids_with_indicators, axis=1)
+            page_df['LLO'] = page_df['LLO'].apply(format_llo)
+            page_df = page_df.fillna('')
+            
+            # Create column configuration with proper sizing
+            column_config = {
+                "Gamechanger ID": st.column_config.TextColumn("Gamechanger ID"),
+                "Primary Employee": st.column_config.TextColumn("Primary Employee"),
+                "AMP Customer ID": st.column_config.TextColumn("AMP Cust ID", width=350),
+                "Firefly ID": st.column_config.TextColumn("Firefly ID"),
+                "Name": st.column_config.TextColumn("Account Name"),
+                "Address": st.column_config.TextColumn("Address"),
+                "City": st.column_config.TextColumn("City"),
+                "State": st.column_config.TextColumn("State"),
+                "Zip": st.column_config.TextColumn("Zip"),
+                "LLO": st.column_config.TextColumn("LLO"),
+                "Market": st.column_config.TextColumn("Market"),
+                "Zone": st.column_config.TextColumn("Zone"),
+                "Account Type": st.column_config.TextColumn("Type"),
+                "Primary Distributor": st.column_config.TextColumn("Primary Distributor")
+            }
+            
+            # Display interactive dataframe
+            selection = st.dataframe(
+                page_df,
+                use_container_width=False,
+                height=600,
+                on_select="rerun",
+                selection_mode="single-row",
+                hide_index=True,
+                column_config=column_config
+            )
+            
+            # Handle row selection
+            if selection and "selection" in selection and "rows" in selection["selection"]:
+                selected_rows = selection["selection"]["rows"]
+                if len(selected_rows) > 0:
+                    selected_idx = selected_rows[0]
+                    selected_row = page_df.iloc[selected_idx]
+                    
+                    # Check if account has at least one ID
+                    if pd.notna(selected_row["Gamechanger ID"]) or pd.notna(selected_row["AMP Source Customer ID"]) or pd.notna(selected_row["Firefly ID"]):
+                        st.session_state.selected_account = selected_row.to_dict()
+                        st.session_state.page = 'activity'
+                        st.rerun()
+                    else:
+                        st.warning("This account has no IDs available to fetch activity.")
+
+            # --- PAGINATION CONTROLS ---
+            st.markdown("---")
+            col1, col2, col3 = st.columns([1, 2, 1])
+            
+            with col1:
+                if st.session_state.current_page > 0:
+                    if st.button("← Previous"):
+                        st.session_state.current_page -= 1
+                        st.rerun()
+            
+            with col2:
+                st.markdown(f"<div class='pagination'>Page {st.session_state.current_page + 1} of {total_pages}</div>", 
+                          unsafe_allow_html=True)
+            
+            with col3:
+                if st.session_state.current_page < total_pages - 1:
+                    if st.button("Next →"):
+                        st.session_state.current_page += 1
+                        st.rerun()
+
+    else:
+        st.info("Start typing an account name (min 2 characters) or select a city/state filter...")
+        st.session_state.current_page = 0
