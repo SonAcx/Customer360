@@ -106,6 +106,13 @@ st.markdown("""
     [data-testid="stDataFrame"] tbody tr {
         border-bottom: 1px solid #003366 !important;
     }
+    
+    /* Green checkmarks */
+    [data-testid="stDataFrame"] td:has-text("✓") {
+        color: green !important;
+        font-weight: bold !important;
+        font-size: 18px !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -212,6 +219,18 @@ if st.session_state.page == 'activity':
                 
                 # Replace 'None' string with empty string for CLOSED_DATE
                 sf_activity_df['CLOSED_DATE'] = sf_activity_df['CLOSED_DATE'].replace('None', '')
+                
+                # Format PIPELINE_ACTIVITY column to show green checkmarks
+                def format_pipeline(value):
+                    if pd.notna(value) and str(value).strip():
+                        val_str = str(value).upper()
+                        if val_str in ['TRUE', '1', 'YES']:
+                            return "✅"
+                        elif val_str in ['FALSE', '0', 'NO']:
+                            return "✗"
+                    return ""
+                
+                sf_activity_df['PIPELINE_ACTIVITY'] = sf_activity_df['PIPELINE_ACTIVITY'].apply(format_pipeline)
                 
                 # Dynamic height based on rows (no empty rows)
                 table_height = min(len(sf_activity_df) * 35 + 38, 400)
@@ -366,9 +385,12 @@ else:
         else:
             # Convert all text columns to uppercase (except IDs which need special handling)
             for col in df.columns:
-                if col not in ['Gamechanger ID', 'AMP Customer ID', 'Firefly ID', 'Zip']:
+                if col not in ['Gamechanger ID', 'AMP Customer ID', 'Firefly ID', 'Zip', 'LLO']:
                     if df[col].dtype == 'object':
                         df[col] = df[col].astype(str).str.upper()
+            
+            # Replace 'NONE' and 'NAN' with empty strings
+            df = df.replace(['NONE', 'NAN', 'None', 'nan'], '')
             
             # Create priority column for sorting
             # Priority 1: Has all 3 IDs (Gamechanger + AMP Customer + Firefly)
@@ -503,12 +525,12 @@ else:
                 
                 return pd.Series([gc_display, amp_display])
             
-            # Format LLO column to show checkmarks instead of true/false
+            # Format LLO column to show GREEN checkmarks instead of true/false
             def format_llo(value):
-                if pd.notna(value):
+                if pd.notna(value) and str(value).strip():
                     val_str = str(value).upper()
                     if val_str in ['TRUE', '1', 'YES']:
-                        return "✓"
+                        return "✅"
                     elif val_str in ['FALSE', '0', 'NO']:
                         return "✗"
                 return ""
