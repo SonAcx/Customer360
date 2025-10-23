@@ -97,21 +97,21 @@ def get_amp_activity_by_customer_id(amp_ampcustomer_id) -> pd.DataFrame:
             mfr.AMP_CLIENTS_CLIENT AS "CLIENT_NAME",
             amp.DISTRIBUTOR,
             amp.ITEM_ID,
-            prod.PRODUCT_NAME,
             prod.SKU,
+            prod.PRODUCT_NAME,
             prod.AMP_CATEGORY AS "CATEGORY",
             prod.AMP_SUB_CATEGORY AS "SUB_CATEGORY",
+            amp.YTD,
             amp.CYM,
+            amp.MAGO_2 AS "2_MONTHS_AGO",
+            amp.MAGO_3 AS "3_MONTHS_AGO",
+            amp.MAGO_4 AS "4_MONTHS_AGO",
+            amp.MAGO_5 AS "5_MONTHS_AGO",
+            amp.MAGO_6 AS "6_MONTHS_AGO",
             amp.LYM,
             amp.LYTD,
-            amp.MAGO_6 AS "6_MONTHS_AGO",
-            amp.MAGO_5 AS "5_MONTHS_AGO",
-            amp.MAGO_4 AS "4_MONTHS_AGO",
-            amp.MAGO_3 AS "3_MONTHS_AGO",
-            amp.MAGO_2 AS "2_MONTHS_AGO",
             amp.PERIOD,
-            amp.UOM,
-            amp.YTD
+            amp.UOM
         FROM PROD_DWH.DWH.FACT_AMP_PURCHASE_DATA amp
         LEFT JOIN PROD_DWH.DWH.DIM_ACCOUNT cust
             ON amp.AMPCUSTOMER_ID = cust.AMP_AMPCUSTOMER_ID
@@ -135,11 +135,11 @@ def get_amp_activity_by_customer_id(amp_ampcustomer_id) -> pd.DataFrame:
             'CLIENT_NAME': 'CLIENT NAME',
             'PRODUCT_NAME': 'PRODUCT NAME',
             'SUB_CATEGORY': 'SUB CATEGORY',
-            '6_MONTHS_AGO': '6 MONTHS AGO',
-            '5_MONTHS_AGO': '5 MONTHS AGO',
-            '4_MONTHS_AGO': '4 MONTHS AGO',
+            '2_MONTHS_AGO': '2 MONTHS AGO',
             '3_MONTHS_AGO': '3 MONTHS AGO',
-            '2_MONTHS_AGO': '2 MONTHS AGO'
+            '4_MONTHS_AGO': '4 MONTHS AGO',
+            '5_MONTHS_AGO': '5 MONTHS AGO',
+            '6_MONTHS_AGO': '6 MONTHS AGO'
         })
         
         return df
