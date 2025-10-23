@@ -276,7 +276,7 @@ else:
     search_term = st.text_input("🔍 Search by Account Name", placeholder="Enter account name (minimum 2 characters)...")
 
     # --- MAIN LOGIC ---
-    if len(search_term.strip()) >= 2 or selected_city != 'All' or selected_state != 'All':
+    if len(search_term.strip()) >= 2:
         # Build dynamic query
         where_clauses = []
         params = []
