@@ -379,7 +379,7 @@ else:
         'Market': True,
         'Zone': True
     },
-    zoom=3,
+    zoom=4,
     height=500,
     color_discrete_sequence=['#003366']  # Acxion blue
 )
